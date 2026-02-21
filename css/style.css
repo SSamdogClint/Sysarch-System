@@ -1,0 +1,41 @@
+body {
+            font-family: 'Poppins', sans-serif;
+            /* Same gradient as Register page */
+            background: linear-gradient(135deg, #D6E6F2 0%, #769FCD 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #F7FBFC !important;
+            backdrop-filter: blur(8px);
+        }
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #eee;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+            border-color: #0d6efd;
+            background-color: #fff !important;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0046b8;
+            transform: translateY(-2px);
+        }
+        .university-title {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
