@@ -37,17 +37,33 @@
                 <p class="text-white-50">Create your student account to get started.</p>
             </div>
 
-            <div class="col-12 col-md-5 col-lg-4">
+            <div class="col-12 col-md-5 col-lg-4" style="margin-top: 20px;">
                 <div class="card p-4 p-md-5">
                     <h3 class="text-center mb-4 fw-bold text-dark">Registration</h3>
-                    <form action="/action_page.php">
-                        <div class="mb-3">
-                            <label class="form-label small text-muted">EMAIL ADDRESS</label>
-                            <input type="email" class="form-control bg-light" placeholder="email@example.com" name="email" required>
+                    <form id="registerForm">
+                        <div class="form-floating mb-3">
+                            <input type="firstname" class="form-control bg-light" placeholder="FIRSTNAME" name="firstname" required>
+                            <label for="firstname">First Name</label>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small text-muted">PASSWORD</label>
-                            <input type="password" class="form-control bg-light" placeholder="Create a password" name="pswd" required>
+                        <div class="form-floating mb-3">
+                            <input type="lastname" class="form-control bg-light" placeholder="LASTNAME" name="lastname" required>
+                            <label for="lastname">Last Name</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="studentid" class="form-control bg-light" placeholder="STUDENT ID" name="studentid" required>
+                            <label for="studentid">Student ID</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control bg-light" placeholder="EMAIL ADDRESS" name="email" required>
+                            <label for="email">Email Address</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control bg-light" placeholder="PASSWORD" name="pswd" required>
+                            <label for="pswd">Password</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control bg-light" placeholder="CONFIRM PASSWORD" name="conpswd" required>
+                            <label for="conpswd">Confirm Password</label>
                         </div>
                         <div class="mb-4">
                             <div class="form-check">

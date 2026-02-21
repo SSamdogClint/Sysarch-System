@@ -1,6 +1,5 @@
 body {
             font-family: 'Poppins', sans-serif;
-            /* Same gradient as Register page */
             background: linear-gradient(135deg, #D6E6F2 0%, #769FCD 100%);
             min-height: 100vh;
         }
