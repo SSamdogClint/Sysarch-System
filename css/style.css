@@ -38,3 +38,32 @@ body {
             font-weight: 600;
             letter-spacing: 0.5px;
         }
+        /* Default (mobile first) */
+        .navbar-expand-custom .navbar-collapse {
+            display: none;
+        }
+
+        .navbar-expand-custom .navbar-collapse.show {
+            display: block;
+        }
+
+        /* Desktop layout above 800px */
+        @media (min-width: 801px) {
+            .navbar-expand-custom {
+                flex-wrap: nowrap;
+            }
+
+            .navbar-expand-custom .navbar-collapse {
+                display: flex !important;
+                flex-basis: auto;
+            }
+
+            .navbar-expand-custom .navbar-nav {
+                flex-direction: row;
+                margin-left: auto;
+            }
+
+            .navbar-expand-custom .navbar-toggler {
+                display: none;
+            }
+        }
