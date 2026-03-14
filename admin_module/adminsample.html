@@ -1,0 +1,130 @@
+<main class="admin-main">
+
+      <div class="admin-topbar">
+        <div>
+          <h2>Dashboard</h2>
+          <p>UC Main Campus · College of Computer Studies Sit-in Monitoring</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-add">+ New sit-in</button>
+        </div>
+      </div>
+
+      <!-- Metric cards -->
+      <div class="metrics">
+        <div class="metric-card metric-blue">
+          <div class="metric-label">Active sit-ins</div>
+          <div class="metric-val">14</div>
+          <div class="metric-sub">Right now</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total students</div>
+          <div class="metric-val">1,248</div>
+          <div class="metric-sub">Registered</div>
+        </div>
+        <div class="metric-card metric-green">
+          <div class="metric-label">Sessions today</div>
+          <div class="metric-val">37</div>
+          <div class="metric-sub">Completed</div>
+        </div>
+        <div class="metric-card metric-amber">
+          <div class="metric-label">Pending reservations</div>
+          <div class="metric-val">5</div>
+          <div class="metric-sub">Needs action</div>
+        </div>
+      </div>
+
+      <!-- Tabs + table -->
+      <div class="data-tabs">
+        <button class="data-tab active">Current sit-ins</button>
+        <button class="data-tab">All students</button>
+        <button class="data-tab">Reservations</button>
+      </div>
+
+      <div class="table-card">
+        <div class="table-head">
+          <h4>Current sit-in sessions</h4>
+          <input class="search-input" placeholder="Search by name or ID…" id="searchInput">
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Course</th>
+                <th>Year</th>
+                <th>Lab</th>
+                <th>Time in</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2024-00012</td>
+                <td>Juan Dela Cruz</td>
+                <td>BSIT</td>
+                <td>2nd</td>
+                <td>Lab 1</td>
+                <td>8:05 AM</td>
+                <td><span class="badge badge-active">Active</span></td>
+                <td><button class="tbl-btn danger">Time out</button></td>
+              </tr>
+              <tr>
+                <td>2024-00089</td>
+                <td>Maria Santos</td>
+                <td>BSCS</td>
+                <td>3rd</td>
+                <td>Lab 3</td>
+                <td>8:30 AM</td>
+                <td><span class="badge badge-active">Active</span></td>
+                <td><button class="tbl-btn danger">Time out</button></td>
+              </tr>
+              <tr>
+                <td>2023-00341</td>
+                <td>Carlo Reyes</td>
+                <td>BSIT</td>
+                <td>4th</td>
+                <td>Lab 2</td>
+                <td>7:50 AM</td>
+                <td><span class="badge badge-done">Done</span></td>
+                <td><button class="tbl-btn">View</button></td>
+              </tr>
+              <tr>
+                <td>2024-00204</td>
+                <td>Ana Flores</td>
+                <td>BSCS</td>
+                <td>1st</td>
+                <td>Lab 1</td>
+                <td>9:10 AM</td>
+                <td><span class="badge badge-done">Done</span></td>
+                <td><button class="tbl-btn">View</button></td>
+              </tr>
+              <tr>
+                <td>2022-00078</td>
+                <td>Kevin Tan</td>
+                <td>BSIT</td>
+                <td>4th</td>
+                <td>Lab 4</td>
+                <td>9:45 AM</td>
+                <td><span class="badge badge-active">Active</span></td>
+                <td><button class="tbl-btn danger">Time out</button></td>
+              </tr>
+              <tr>
+                <td>2025-00003</td>
+                <td>Liza Montoya</td>
+                <td>BSCS</td>
+                <td>1st</td>
+                <td>Lab 2</td>
+                <td>10:00 AM</td>
+                <td><span class="badge badge-pending">Pending</span></td>
+                <td><button class="tbl-btn">Approve</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
