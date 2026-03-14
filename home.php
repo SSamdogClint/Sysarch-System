@@ -1,3 +1,9 @@
+<?php
+session_start();
+$loggedIn  = !empty($_SESSION['logged_in']);
+$firstname = htmlspecialchars($_SESSION['firstname'] ?? '');
+$lastname  = htmlspecialchars($_SESSION['lastname']  ?? '');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +14,6 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* ── Hero ── */
     .hero {
       min-height: calc(100vh - 60px);
       display: flex;
@@ -25,18 +30,16 @@
       pointer-events: none;
       opacity: 0.035;
       background-image:
-        repeating-linear-gradient(0deg,   #1d4ed8 0, #1d4ed8 1px, transparent 0, transparent 64px),
-        repeating-linear-gradient(90deg,  #1d4ed8 0, #1d4ed8 1px, transparent 0, transparent 64px);
+        repeating-linear-gradient(0deg,  #1d4ed8 0, #1d4ed8 1px, transparent 0, transparent 64px),
+        repeating-linear-gradient(90deg, #1d4ed8 0, #1d4ed8 1px, transparent 0, transparent 64px);
     }
 
     .hero-blob {
       position: absolute;
-      width: 520px;
-      height: 520px;
+      width: 520px; height: 520px;
       border-radius: 50%;
       background: radial-gradient(circle, rgba(29,78,216,0.07) 0%, transparent 70%);
-      top: -100px;
-      right: -100px;
+      top: -100px; right: -100px;
       pointer-events: none;
     }
 
@@ -63,7 +66,6 @@
       font-weight: 600;
       border: 1px solid #bfdbfe;
       margin-bottom: 1.5rem;
-      letter-spacing: 0.3px;
     }
 
     .hero h1 {
@@ -97,39 +99,50 @@
 
     .btn-hero-primary {
       padding: 13px 28px;
-      background: #1d4ed8;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
+      background: #1d4ed8; color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 600;
       font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-decoration: none;
-      display: inline-block;
+      cursor: pointer; transition: all 0.15s;
+      text-decoration: none; display: inline-block;
     }
-
     .btn-hero-primary:hover { background: #1e40af; color: #fff; transform: translateY(-1px); }
 
     .btn-hero-outline {
       padding: 13px 28px;
-      background: transparent;
-      color: #374151;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
+      background: transparent; color: #374151;
+      border: 1px solid #d1d5db; border-radius: 10px;
+      font-size: 14px; font-weight: 500;
       font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-decoration: none;
-      display: inline-block;
+      cursor: pointer; transition: all 0.15s;
+      text-decoration: none; display: inline-block;
     }
-
     .btn-hero-outline:hover { border-color: #9ca3af; background: #f9fafb; color: #111827; }
 
-    /* Stats row */
+    /* Logged-in welcome banner */
+    .welcome-banner {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 99px;
+      padding: 7px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e40af;
+      margin-bottom: 1.5rem;
+    }
+
+    .welcome-avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: #1d4ed8;
+      color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
     .stats-row {
       display: flex;
       gap: 2.5rem;
@@ -139,23 +152,10 @@
       border-top: 1px solid #f3f4f6;
     }
 
-    .stat-num {
-      font-size: 26px;
-      font-weight: 800;
-      color: #1d4ed8;
-    }
+    .stat-num { font-size: 26px; font-weight: 800; color: #1d4ed8; }
+    .stat-lbl { font-size: 12px; color: #9ca3af; margin-top: 2px; }
 
-    .stat-lbl {
-      font-size: 12px;
-      color: #9ca3af;
-      margin-top: 2px;
-    }
-
-    /* Feature cards */
-    .features {
-      background: #f5f6fa;
-      padding: 5rem 1.5rem;
-    }
+    .features { background: #f5f6fa; padding: 5rem 1.5rem; }
 
     .features-grid {
       display: grid;
@@ -173,36 +173,36 @@
     }
 
     .feature-icon {
-      width: 44px;
-      height: 44px;
-      background: #eff6ff;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      margin-bottom: 1rem;
+      width: 44px; height: 44px;
+      background: #eff6ff; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 1rem;
     }
 
     .feature-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
     .feature-card p  { font-size: 13px; color: #6b7280; line-height: 1.6; }
 
     .section-label {
-      text-align: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: #1d4ed8;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 0.75rem;
+      text-align: center; font-size: 12px; font-weight: 700;
+      color: #1d4ed8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.75rem;
     }
 
     .section-title {
-      text-align: center;
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 2.5rem;
-      letter-spacing: -0.5px;
+      text-align: center; font-size: 28px; font-weight: 700;
+      margin-bottom: 2.5rem; letter-spacing: -0.5px;
+    }
+
+    /* Logged-in nav user chip */
+    .nav-user {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: #374151; padding: 0 4px;
+    }
+
+    .nav-user-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #1d4ed8; color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
     }
 
     @media (max-width: 600px) {
@@ -215,8 +215,8 @@
 
   <!-- ═══ NAVBAR ═══ -->
   <nav class="uc-nav">
-    <a class="nav-brand" href="home.html">
-      <img src="../images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
+    <a class="nav-brand" href="home.php">
+      <img src="images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
       <div>
         <div class="nav-title">UC Sit-in System</div>
         <div class="nav-sub">Main Campus · CCS</div>
@@ -228,11 +228,21 @@
     </button>
 
     <div class="nav-links" id="navLinks">
-      <a class="nav-link active" href="home.html">Home</a>
+      <a class="nav-link active" href="home.php">Home</a>
       <a class="nav-link" href="#">Community</a>
       <a class="nav-link" href="#">About</a>
       <div class="nav-divider"></div>
-      <a class="nav-cta" href="login.html">Sign in</a>
+
+      <?php if ($loggedIn): ?>
+        <div class="nav-user">
+          <div class="nav-user-avatar"><?= strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1)) ?></div>
+          <?= $firstname . ' ' . $lastname ?>
+        </div>
+        <a class="nav-link" href="logout.php">Log out</a>
+      <?php else: ?>
+        <a class="nav-link" href="login_page.php">Sign in</a>
+        <a class="nav-cta"  href="register_page.php">Sign up</a>
+      <?php endif; ?>
     </div>
   </nav>
 
@@ -241,13 +251,29 @@
     <div class="hero-grid-bg"></div>
     <div class="hero-blob"></div>
     <div class="hero-inner">
-      <div class="hero-badge">University of Cebu — Main Campus</div>
+
+      <?php if ($loggedIn): ?>
+        <div class="welcome-banner">
+          <div class="welcome-avatar"><?= strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1)) ?></div>
+          Welcome back, <?= $firstname ?>!
+        </div>
+      <?php else: ?>
+        <div class="hero-badge">University of Cebu — Main Campus</div>
+      <?php endif; ?>
+
       <h1>College of <span>Computer Studies</span><br>Sit-in System</h1>
       <p>Monitor, manage, and track sit-in sessions for CCS students. Log in with your student account to check your credits and reserve a seat.</p>
+
       <div class="hero-btns">
-        <a href="login.html" class="btn-hero-primary">Sign in</a>
-        <a href="register.html" class="btn-hero-outline">Create account</a>
+        <?php if ($loggedIn): ?>
+          <a href="dashboard.php" class="btn-hero-primary">Go to Dashboard</a>
+          <a href="logout.php"    class="btn-hero-outline">Log out</a>
+        <?php else: ?>
+          <a href="login_page.php"    class="btn-hero-primary">Sign in</a>
+          <a href="register_page.php" class="btn-hero-outline">Create account</a>
+        <?php endif; ?>
       </div>
+
       <div class="stats-row">
         <div class="stat">
           <div class="stat-num">1,200+</div>
