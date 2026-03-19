@@ -1,8 +1,25 @@
+<?php
+session_start();
+
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+header('Expires: Sat, 01 Jan 2000 00:00:00 GMT');
+
+if (empty($_SESSION['admin_logged_in'])) {
+    header('Location: ../admin_login.php');
+    exit;
+}
+$admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>UC – Admin Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
@@ -17,7 +34,6 @@
       .admin-main { padding: 1.25rem; }
     }
 
-    /* ── Dashboard grid ── */
     .dashboard-grid {
       display: grid;
       grid-template-columns: 380px 1fr;
@@ -29,7 +45,6 @@
       .dashboard-grid { grid-template-columns: 1fr; }
     }
 
-    /* ── Stat counters row ── */
     .stat-counters {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -45,78 +60,51 @@
       border-top: 3px solid #1d4ed8;
     }
 
-    .stat-counter-card.green  { border-top-color: #059669; }
-    .stat-counter-card.amber  { border-top-color: #d97706; }
+    .stat-counter-card.green { border-top-color: #059669; }
+    .stat-counter-card.amber { border-top-color: #d97706; }
 
     .stat-counter-val {
-      font-size: 28px;
-      font-weight: 800;
-      color: #111827;
-      line-height: 1;
-      margin-bottom: 4px;
+      font-size: 28px; font-weight: 800;
+      color: #111827; line-height: 1; margin-bottom: 4px;
     }
 
     .stat-counter-lbl {
-      font-size: 11px;
-      font-weight: 500;
-      color: #6b7280;
-      line-height: 1.3;
+      font-size: 11px; font-weight: 500;
+      color: #6b7280; line-height: 1.3;
     }
 
-    /* ── Chart card ── */
     .chart-card {
-      background: #fff;
-      border-radius: 14px;
+      background: #fff; border-radius: 14px;
       padding: 1.25rem 1.5rem;
       box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     }
 
     .chart-card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 7px;
+      font-size: 13px; font-weight: 600;
+      color: #374151; margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 7px;
     }
 
     .chart-card-title::before {
-      content: '';
-      display: inline-block;
-      width: 4px;
-      height: 16px;
-      background: #1d4ed8;
-      border-radius: 2px;
+      content: ''; display: inline-block;
+      width: 4px; height: 16px;
+      background: #1d4ed8; border-radius: 2px;
     }
 
-    .chart-wrapper {
-      position: relative;
-      width: 100%;
-      height: 230px;
-    }
+    .chart-wrapper { position: relative; width: 100%; height: 230px; }
 
-    /* ── Announcement card ── */
     .announce-card {
-      background: #fff;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      background: #fff; border-radius: 14px;
+      overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     }
 
     .announce-card-header {
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid #f3f4f6;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      padding: 1rem 1.5rem; border-bottom: 1px solid #f3f4f6;
+      display: flex; align-items: center; justify-content: space-between;
     }
 
     .announce-card-header h4 {
-      font-size: 14px;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
+      font-size: 14px; font-weight: 700; color: #111827; margin: 0;
     }
 
     .compose-area {
@@ -126,28 +114,17 @@
     }
 
     .compose-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #6b7280;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      display: block;
+      font-size: 11px; font-weight: 700; color: #6b7280;
+      letter-spacing: 0.6px; text-transform: uppercase;
+      margin-bottom: 8px; display: block;
     }
 
     .announce-textarea {
-      width: 100%;
-      border: 1px solid #e5e7eb;
-      border-radius: 9px;
-      padding: 10px 13px;
-      font-size: 13px;
-      font-family: 'Poppins', sans-serif;
-      color: #111827;
-      background: #fff;
-      resize: none;
-      height: 80px;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 9px;
+      padding: 10px 13px; font-size: 13px;
+      font-family: 'Poppins', sans-serif; color: #111827;
+      background: #fff; resize: none; height: 80px;
+      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     .announce-textarea:focus {
@@ -155,47 +132,23 @@
       box-shadow: 0 0 0 3px rgba(29,78,216,0.1);
     }
 
-    .compose-footer {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
-    }
+    .compose-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
 
     .btn-post {
-      padding: 8px 20px;
-      background: #1d4ed8;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      transition: background 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      padding: 8px 20px; background: #1d4ed8; color: #fff;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+      font-family: 'Poppins', sans-serif; cursor: pointer;
+      transition: background 0.15s; display: flex; align-items: center; gap: 6px;
     }
 
     .btn-post:hover { background: #1e40af; }
 
-    /* Feed */
     .announce-feed {
-      padding: 0 1.5rem;
-      max-height: 340px;
-      overflow-y: auto;
-    }
-
-    .feed-empty {
-      padding: 2rem 0;
-      text-align: center;
-      font-size: 13px;
-      color: #9ca3af;
+      padding: 0 1.5rem; max-height: 340px; overflow-y: auto;
     }
 
     .feed-item {
-      padding: 1rem 0;
-      border-bottom: 1px solid #f3f4f6;
+      padding: 1rem 0; border-bottom: 1px solid #f3f4f6;
       animation: slideIn 0.2s ease;
     }
 
@@ -207,60 +160,37 @@
     .feed-item:last-child { border-bottom: none; }
 
     .feed-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
+      display: flex; align-items: center;
+      gap: 10px; margin-bottom: 6px;
     }
 
     .feed-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #eff6ff;
-      color: #1d4ed8;
-      font-size: 11px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #eff6ff; color: #1d4ed8;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
 
-    .feed-author {
-      font-size: 13px;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .feed-date {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-left: auto;
-    }
+    .feed-author { font-size: 13px; font-weight: 600; color: #111827; }
+    .feed-date   { font-size: 11px; color: #9ca3af; margin-left: auto; }
 
     .feed-body {
-      font-size: 13px;
-      color: #4b5563;
-      line-height: 1.65;
-      padding-left: 42px;
+      font-size: 13px; color: #4b5563;
+      line-height: 1.65; padding-left: 42px;
     }
 
-    .feed-body.empty-body {
-      font-style: italic;
-      color: #9ca3af;
-    }
+    .feed-body.empty-body { font-style: italic; color: #9ca3af; }
   </style>
 </head>
 <body>
 
   <!-- ═══ NAVBAR ═══ -->
   <nav class="uc-nav">
-    <a class="nav-brand" href="#">
+    <a class="nav-brand" href="../home.php">
       <img src="../images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
       <div>
         <div class="nav-title">UC Sit-in System</div>
-        <div class="nav-sub">Admin panel</div>
+        <div class="nav-sub">Admin Panel</div>
       </div>
     </a>
 
@@ -269,9 +199,11 @@
     </button>
 
     <div class="nav-links" id="navLinks">
-      <span style="font-size:13px; color:#6b7280; padding: 0 8px;">Administrator</span>
+      <span style="font-size:13px; color:#6b7280; padding: 0 8px;">
+        <?= $admin_name ?>
+      </span>
       <div class="nav-divider"></div>
-      <a class="nav-link" href="../home.html">Log out</a>
+      <a class="nav-link" href="../logout.php">Log out</a>
     </div>
   </nav>
 
@@ -281,7 +213,7 @@
     <!-- ── Sidebar ── -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-section" style="margin-top:0;">Main</div>
-      <a class="sidebar-link active" href="#">
+      <a class="sidebar-link active" href="admin_dashboard.php">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Dashboard
       </a>
@@ -294,7 +226,7 @@
         Sit-in
       </a>
       <a class="sidebar-link" href="#">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Sit-in Records
       </a>
 
@@ -317,13 +249,10 @@
 
     <!-- ── Main content ── -->
     <main class="admin-main">
-
       <div class="dashboard-grid">
 
-        <!-- ════ LEFT COL: stats + chart ════ -->
+        <!-- LEFT COL -->
         <div>
-
-          <!-- Counter cards -->
           <div class="stat-counters">
             <div class="stat-counter-card">
               <div class="stat-counter-val">38</div>
@@ -339,28 +268,24 @@
             </div>
           </div>
 
-          <!-- Doughnut chart -->
           <div class="chart-card">
             <div class="chart-card-title">Sit-ins by Programming Language</div>
             <div class="chart-wrapper">
               <canvas id="languageChart"></canvas>
             </div>
           </div>
-
         </div>
 
-        <!-- ════ RIGHT COL: announcements ════ -->
+        <!-- RIGHT COL -->
         <div class="announce-card">
-
           <div class="announce-card-header">
             <h4>
               <svg style="margin-right:6px; vertical-align:-2px;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               Announcements
             </h4>
-            <span style="font-size:12px; color:#9ca3af;">2 posted</span>
+            <span id="postCountLabel" style="font-size:12px; color:#9ca3af;">2 posted</span>
           </div>
 
-          <!-- Compose -->
           <div class="compose-area">
             <span class="compose-label">New announcement</span>
             <textarea class="announce-textarea" id="announceText" placeholder="Write something for students to see…"></textarea>
@@ -372,9 +297,7 @@
             </div>
           </div>
 
-          <!-- Feed -->
           <div class="announce-feed" id="announceList">
-
             <div class="feed-item">
               <div class="feed-top">
                 <div class="feed-avatar">CA</div>
@@ -383,7 +306,6 @@
               </div>
               <div class="feed-body empty-body">No message content.</div>
             </div>
-
             <div class="feed-item">
               <div class="feed-top">
                 <div class="feed-avatar">CA</div>
@@ -392,7 +314,6 @@
               </div>
               <div class="feed-body">Important Announcement: We are excited to announce the launch of our new website! 🌐 Explore our latest products and services now!</div>
             </div>
-
           </div>
         </div>
 
@@ -402,12 +323,22 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Mobile nav toggle
     document.getElementById('navToggler').addEventListener('click', () => {
       document.getElementById('navLinks').classList.toggle('open');
     });
 
-    // ── Doughnut chart ──
+    // Back button protection
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) {
+        fetch('../check_session.php?type=admin', { cache: 'no-store' })
+          .then(res => res.json())
+          .then(data => {
+            if (!data.logged_in) window.location.replace('../home.php');
+          });
+      }
+    });
+
+    // Doughnut chart
     const ctx = document.getElementById('languageChart').getContext('2d');
     new Chart(ctx, {
       type: 'doughnut',
@@ -415,47 +346,34 @@
         labels: ['C#', 'C', 'Java', 'ASP.Net', 'PHP'],
         datasets: [{
           data: [25, 20, 20, 20, 15],
-          backgroundColor: ['#3b82f6', '#f97316', '#ec4899', '#eab308', '#06b6d4'],
-          borderColor: '#fff',
-          borderWidth: 3,
-          hoverOffset: 6,
+          backgroundColor: ['#3b82f6','#f97316','#ec4899','#eab308','#06b6d4'],
+          borderColor: '#fff', borderWidth: 3, hoverOffset: 6,
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '55%',
+        responsive: true, maintainAspectRatio: false, cutout: '55%',
         plugins: {
           legend: {
             position: 'bottom',
-            labels: {
-              font: { family: 'Poppins', size: 12 },
-              boxWidth: 12,
-              padding: 14,
-            }
+            labels: { font: { family: 'Poppins', size: 12 }, boxWidth: 12, padding: 14 }
           },
           tooltip: {
             bodyFont: { family: 'Poppins' },
             titleFont: { family: 'Poppins', weight: '600' },
-            callbacks: {
-              label: ctx => ` ${ctx.label}: ${ctx.parsed}%`
-            }
+            callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` }
           }
         }
       }
     });
 
-    // ── Post announcement ──
+    // Post announcement
     let postCount = 2;
-
     function postAnnouncement() {
       const text = document.getElementById('announceText').value.trim();
       if (!text) return;
-
       const now = new Date();
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       const dateStr = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
-
       const item = document.createElement('div');
       item.className = 'feed-item';
       item.innerHTML = `
@@ -466,13 +384,10 @@
         </div>
         <div class="feed-body">${text}</div>
       `;
-
-      const list = document.getElementById('announceList');
-      list.insertBefore(item, list.firstChild);
+      document.getElementById('announceList').insertBefore(item, announceList.firstChild);
       document.getElementById('announceText').value = '';
-
       postCount++;
-      document.querySelector('.announce-card-header span').textContent = `${postCount} posted`;
+      document.getElementById('postCountLabel').textContent = `${postCount} posted`;
     }
   </script>
 </body>

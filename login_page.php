@@ -65,11 +65,11 @@ session_start();
           <?php unset($_SESSION['reg_success']); ?>
         <?php endif; ?>
 
-        <form action="login.php" method="post">
+        <form action="login_handler.php" method="post">
           <div class="field">
-            <label for="email">Email address</label>
-            <input type="email" id="email" name="email" placeholder="you@uc.edu.ph" required
-                   value="<?= htmlspecialchars($_SESSION['login_old']['email'] ?? '') ?>">
+            <label for="studentid">ID Number</label>
+            <input type="text" id="studentid" name="studentid" placeholder="e.g. 2024-00001" required
+                  value="<?= htmlspecialchars($_SESSION['login_old']['studentid'] ?? '') ?>">
           </div>
           <div class="field">
             <label for="pswd">Password</label>
