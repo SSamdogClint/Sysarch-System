@@ -27,6 +27,7 @@
 | Linux | `/opt/lampp/htdocs/` |
 
 3. Make sure the folder structure looks like this:
+(note: in my case this not the final folder structure yet)
 
 ```
 Sysarch-System/
