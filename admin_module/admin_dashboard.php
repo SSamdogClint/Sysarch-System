@@ -217,6 +217,10 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Dashboard
       </a>
+      <a class="sidebar-link" href="#" onclick="openSearchModal(); return false;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search
+      </a>
       <a class="sidebar-link" href="#">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Students
@@ -320,6 +324,91 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
       </div>
     </main>
   </div>
+  <!-- ═══ SEARCH STUDENT MODAL ═══ -->
+  <div id="searchModal" style="
+    display:none; position:fixed; inset:0; z-index:999;
+    background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+
+    <div style="
+      background:#fff; border-radius:16px; width:100%; max-width:520px;
+      margin:1rem; box-shadow:0 20px 60px rgba(0,0,0,0.2);
+      font-family:'Poppins',sans-serif; overflow:hidden;">
+
+      <!-- Header -->
+      <div style="
+        background:#1d3a6e; color:#fff; padding:16px 24px;
+        display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:14px; font-weight:600;">
+          <svg style="margin-right:6px; vertical-align:-3px;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search Student
+        </span>
+        <button onclick="closeSearchModal()" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      </div>
+
+      <!-- Search input -->
+      <div style="padding:20px 24px; border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="searchInput" placeholder="Enter Student ID (e.g. 2024-00001)"
+            style="flex:1; border:1px solid #e5e7eb; border-radius:8px; padding:10px 14px;
+                  font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;"
+            onkeydown="if(event.key==='Enter') searchStudent()">
+          <button onclick="searchStudent()" style="
+            padding:10px 20px; background:#1d3a6e; color:#fff; border:none;
+            border-radius:8px; font-size:13px; font-weight:600;
+            font-family:'Poppins',sans-serif; cursor:pointer; white-space:nowrap;">
+            Search
+          </button>
+        </div>
+        <div id="searchError" style="display:none; margin-top:8px; font-size:12px; color:#b91c1c;"></div>
+      </div>
+
+      <!-- Result -->
+      <div id="searchResult" style="display:none; padding:20px 24px;">
+
+        <!-- Avatar + name -->
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #f3f4f6;">
+          <div id="resultAvatar" style="
+            width:56px; height:56px; border-radius:50%;
+            background:#1d3a6e; color:#fff;
+            font-size:20px; font-weight:700;
+            display:flex; align-items:center; justify-content:center;
+            flex-shrink:0; border:3px solid #e5e7eb;">
+          </div>
+          <div>
+            <div id="resultName" style="font-size:15px; font-weight:700; color:#111827;"></div>
+            <div id="resultId" style="font-size:12px; color:#6b7280; margin-top:2px;"></div>
+          </div>
+        </div>
+
+        <!-- Info rows -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="background:#f9fafb; border-radius:8px; padding:10px 14px;">
+            <div style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:3px;">COURSE</div>
+            <div id="resultCourse" style="font-size:13px; font-weight:600; color:#111827;"></div>
+          </div>
+          <div style="background:#f9fafb; border-radius:8px; padding:10px 14px;">
+            <div style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:3px;">YEAR LEVEL</div>
+            <div id="resultYear" style="font-size:13px; font-weight:600; color:#111827;"></div>
+          </div>
+          <div style="background:#f9fafb; border-radius:8px; padding:10px 14px;">
+            <div style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:3px;">EMAIL</div>
+            <div id="resultEmail" style="font-size:13px; font-weight:600; color:#111827; word-break:break-all;"></div>
+          </div>
+          <div style="background:#f9fafb; border-radius:8px; padding:10px 14px;">
+            <div style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:3px;">ADDRESS</div>
+            <div id="resultAddr" style="font-size:13px; font-weight:600; color:#111827;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Loading -->
+      <div id="searchLoading" style="display:none; padding:32px; text-align:center; font-size:13px; color:#6b7280;">
+        Searching...
+      </div>
+
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -389,6 +478,74 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
       postCount++;
       document.getElementById('postCountLabel').textContent = `${postCount} posted`;
     }
+
+    //search modal
+    function openSearchModal() {
+      document.getElementById('searchModal').style.display = 'flex';
+      document.getElementById('searchInput').focus();
+      resetSearch();
+    }
+
+    function closeSearchModal() {
+      document.getElementById('searchModal').style.display = 'none';
+      resetSearch();
+    }
+
+    function resetSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchResult').style.display = 'none';
+      document.getElementById('searchError').style.display = 'none';
+      document.getElementById('searchLoading').style.display = 'none';
+    }
+
+    function searchStudent() {
+      const id = document.getElementById('searchInput').value.trim();
+      if (!id) {
+        showSearchError('Please enter a Student ID.');
+        return;
+      }
+
+      document.getElementById('searchResult').style.display = 'none';
+      document.getElementById('searchError').style.display = 'none';
+      document.getElementById('searchLoading').style.display = 'block';
+
+      fetch(`../search_student.php?studentid=${encodeURIComponent(id)}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('searchLoading').style.display = 'none';
+          if (!data.found) {
+            showSearchError('No student found with that ID.');
+            return;
+          }
+          const s = data.student;
+          const initials = (s.firstname.charAt(0) + s.lastname.charAt(0)).toUpperCase();
+          const yearLabels = { 1:'1st Year', 2:'2nd Year', 3:'3rd Year', 4:'4th Year' };
+
+          document.getElementById('resultAvatar').textContent = initials;
+          document.getElementById('resultName').textContent   = s.lastname + ', ' + s.firstname + ' ' + s.middlename;
+          document.getElementById('resultId').textContent     = 'ID: ' + s.studentid;
+          document.getElementById('resultCourse').textContent = s.course;
+          document.getElementById('resultYear').textContent   = yearLabels[s.yearlvl] || s.yearlvl;
+          document.getElementById('resultEmail').textContent  = s.email;
+          document.getElementById('resultAddr').textContent   = s.addrs;
+          document.getElementById('searchResult').style.display = 'block';
+        })
+        .catch(() => {
+          document.getElementById('searchLoading').style.display = 'none';
+          showSearchError('Something went wrong. Please try again.');
+        });
+    }
+
+    function showSearchError(msg) {
+      const el = document.getElementById('searchError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    // Close when clicking outside
+    document.getElementById('searchModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSearchModal();
+    });
   </script>
 </body>
 </html>
