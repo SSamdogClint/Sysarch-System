@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 Installation Guide
+## Installation Guide
 
 ### Step 1: Install XAMPP
 
