@@ -9,13 +9,13 @@ session_start();
   <title>UC – Sign In</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 
   <nav class="uc-nav">
     <a class="nav-brand" href="home.php">
-      <img src="images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
+      <img src="assets/images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
       <div>
         <div class="nav-title">UC Sit-in System</div>
         <div class="nav-sub">Main Campus · CCS</div>
@@ -41,7 +41,7 @@ session_start();
         <circle cx="40"  cy="500" r="170" fill="rgba(255,255,255,0.04)"/>
         <circle cx="200" cy="300" r="220" fill="rgba(255,255,255,0.025)"/>
       </svg>
-      <img src="images/uclogo_nobg.png" alt="UC Logo" class="brand-mark">
+      <img src="assets/images/uclogo_nobg.png" alt="UC Logo" class="brand-mark">
       <h2>Welcome back</h2>
       <p>Log in to access your sit-in credits, session history, and seat reservations.</p>
     </div>
@@ -65,7 +65,7 @@ session_start();
           <?php unset($_SESSION['reg_success']); ?>
         <?php endif; ?>
 
-        <form action="login_handler.php" method="post">
+        <form action="includes/login_handler.php" method="post">
           <div class="field">
             <label for="studentid">ID Number</label>
             <input type="text" id="studentid" name="studentid" placeholder="e.g. 2024-00001" required

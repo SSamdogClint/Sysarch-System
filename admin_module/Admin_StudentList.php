@@ -2,10 +2,12 @@
 session_start();
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
+header('Expires: Sat, 01 Jan 2000 00:00:00 GMT');
 
 if (empty($_SESSION['admin_logged_in'])) {
-    header('Location: ../admin_login.php');
+    header('Location: ../login_page.php');
     exit;
 }
 
@@ -28,7 +30,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
   <title>UC – Student List</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
   <style>
     body { background: #eef0f5; font-family: 'Poppins', sans-serif; }
 
@@ -254,8 +256,8 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
 
   <!-- NAVBAR -->
   <nav class="uc-nav">
-    <a class="nav-brand" href="../home.php">
-      <img src="../images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
+    <a class="nav-brand" href="admin_dashboard.php">
+      <img src="../assets/images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
       <div>
         <div class="nav-title">UC Sit-in System</div>
         <div class="nav-sub">Admin Panel</div>
@@ -681,6 +683,17 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // Back button protection
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) {
+        fetch('../includes/check_session.php?type=admin', { cache: 'no-store' })
+          .then(res => res.json())
+          .then(data => {
+            if (!data.logged_in) window.location.replace('../home.php');
+          });
+      }
+    });
+    
     document.getElementById('navToggler').addEventListener('click', () => {
       document.getElementById('navLinks').classList.toggle('open');
     });
@@ -717,7 +730,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       const fd = new FormData();
       fd.append('student_id', deleteTargetId);
 
-      fetch('../delete_student.php', { method: 'POST', body: fd })
+      fetch('/Sysarch-System/includes/delete_student.php', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
           closeDeleteModal();
@@ -741,7 +754,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
     }
 
     function resetAllSessions() {
-      fetch('../reset_sessions.php', { method: 'POST' })
+      fetch('/Sysarch-System/includes/reset_sessions.php', { method: 'POST' })
         .then(res => res.json())
         .then(data => {
           closeResetModal();
@@ -802,7 +815,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       document.getElementById('searchError').style.display = 'none';
       document.getElementById('searchLoading').style.display = 'block';
 
-      fetch(`../search_student.php?studentid=${encodeURIComponent(id)}`)
+      fetch(`../includes/search_student.php?studentid=${encodeURIComponent(id)}`)
         .then(res => res.json())
         .then(data => {
           document.getElementById('searchLoading').style.display = 'none';
@@ -880,7 +893,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
         return;
       }
 
-      fetch(`../search_student.php?studentid=${encodeURIComponent(id)}`)
+      fetch(`../includes/search_student.php?studentid=${encodeURIComponent(id)}`)
         .then(res => res.json())
         .then(data => {
           if (!data.found) {
@@ -923,7 +936,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       formData.append('purpose',   purpose);
       formData.append('lab',       lab);
 
-      fetch('../register_sitin.php', { method: 'POST', body: formData })
+      fetch('../includes/register_sitin.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
           if (!data.success) {

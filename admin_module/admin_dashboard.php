@@ -7,7 +7,7 @@ header('Pragma: no-cache');
 header('Expires: Sat, 01 Jan 2000 00:00:00 GMT');
 
 if (empty($_SESSION['admin_logged_in'])) {
-    header('Location: ../admin_login.php');
+    header('Location: ../login_page.php');
     exit;
 }
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
@@ -23,7 +23,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
   <title>UC – Admin Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { background: #eef0f5; }
@@ -186,8 +186,8 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
 
   <!-- ═══ NAVBAR ═══ -->
   <nav class="uc-nav">
-    <a class="nav-brand" href="../home.php">
-      <img src="../images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
+    <a class="nav-brand" href="admin_dashboard.php">
+      <img src="../assets/images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
       <div>
         <div class="nav-title">UC Sit-in System</div>
         <div class="nav-sub">Admin Panel</div>
@@ -543,9 +543,10 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
     });
 
     // Back button protection
+    // Back button protection
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) {
-        fetch('../check_session.php?type=admin', { cache: 'no-store' })
+        fetch('../includes/check_session.php?type=admin', { cache: 'no-store' })
           .then(res => res.json())
           .then(data => {
             if (!data.logged_in) window.location.replace('../home.php');
@@ -635,7 +636,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
       document.getElementById('searchError').style.display = 'none';
       document.getElementById('searchLoading').style.display = 'block';
 
-      fetch(`../search_student.php?studentid=${encodeURIComponent(id)}`)
+      fetch(`../includes/search_student.php?studentid=${encodeURIComponent(id)}`)
         .then(res => res.json())
         .then(data => {
           document.getElementById('searchLoading').style.display = 'none';
@@ -713,7 +714,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
         return;
       }
 
-      fetch(`../search_student.php?studentid=${encodeURIComponent(id)}`)
+      fetch(`../includes/search_student.php?studentid=${encodeURIComponent(id)}`)
         .then(res => res.json())
         .then(data => {
           if (!data.found) {
@@ -756,7 +757,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
       formData.append('purpose',   purpose);
       formData.append('lab',       lab);
 
-      fetch('../register_sitin.php', { method: 'POST', body: formData })
+      fetch('../includes/register_sitin.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
           if (!data.success) {

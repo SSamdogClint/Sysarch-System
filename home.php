@@ -12,7 +12,7 @@ $lastname  = htmlspecialchars($_SESSION['lastname']  ?? '');
   <title>UC – Home</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css">
   <style>
     .hero {
       min-height: calc(100vh - 60px);
@@ -216,7 +216,7 @@ $lastname  = htmlspecialchars($_SESSION['lastname']  ?? '');
   <!-- ═══ NAVBAR ═══ -->
   <nav class="uc-nav">
     <a class="nav-brand" href="home.php">
-      <img src="images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
+      <img src="assets/images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
       <div>
         <div class="nav-title">UC Sit-in System</div>
         <div class="nav-sub">Main Campus · CCS</div>

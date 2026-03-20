@@ -11,7 +11,7 @@ unset($_SESSION['reg_old']);
   <title>UC – Register</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css">
   <style>
     .auth-right { align-items: flex-start; overflow-y: auto; padding: 2rem; }
     .auth-card  { max-width: 520px; margin-top: 1rem; margin-bottom: 1rem; }
@@ -47,7 +47,7 @@ unset($_SESSION['reg_old']);
 
   <nav class="uc-nav">
     <a class="nav-brand" href="home.php">
-      <img src="images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
+      <img src="assets/images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
       <div>
         <div class="nav-title">UC Sit-in System</div>
         <div class="nav-sub">Main Campus · CCS</div>
@@ -73,7 +73,7 @@ unset($_SESSION['reg_old']);
         <circle cx="40"  cy="500" r="170" fill="rgba(255,255,255,0.04)"/>
         <circle cx="200" cy="300" r="220" fill="rgba(255,255,255,0.025)"/>
       </svg>
-      <img src="images/uclogo_nobg.png" alt="UC Logo" class="brand-mark">
+      <img src="assets/images/uclogo_nobg.png" alt="UC Logo" class="brand-mark">
       <h2>Join the CCS<br>Sit-in System</h2>
       <p>Create your student account to track credits, reserve seats, and manage your lab sessions.</p>
     </div>

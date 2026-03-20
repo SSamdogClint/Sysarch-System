@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/db_config.php';
+require_once __DIR__ . '/../config/db_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: login_page.php');
@@ -21,7 +21,7 @@ if ($studentid === 'admin' && $pswd === 'admin123') {
     session_regenerate_id(true);
     $_SESSION['admin_logged_in'] = true;
     $_SESSION['admin_name']      = 'Administrator';
-    header('Location: admin_module/admin_dashboard.php');
+    header('Location: /Sysarch-System/admin_module/admin_dashboard.php');
     exit;
 }
 
@@ -53,5 +53,5 @@ $_SESSION['email']           = $student['email'];
 $_SESSION['addrs']           = $student['addrs'];
 $_SESSION['session_credits'] = 30;
 
-header('Location: student_module/student_dashboard.php');
+header('Location: /Sysarch-System/student_module/student_dashboard.php');
 exit;

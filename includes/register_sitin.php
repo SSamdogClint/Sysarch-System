@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/db_config.php';
+require_once '../config/db_config.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['admin_logged_in'])) {

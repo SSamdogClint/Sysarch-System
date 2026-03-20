@@ -37,7 +37,7 @@ $initials = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
   <title>UC – Student Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
   <style>
     * { box-sizing: border-box; }
     body { background: #eef0f5; font-family: 'Poppins', sans-serif; margin: 0; }
@@ -174,7 +174,7 @@ $initials = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
   <!-- ═══ NAVBAR — admin style ═══ -->
   <nav class="uc-nav">
     <a class="nav-brand" href="student_dashboard.php">
-      <img src="../images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
+      <img src="../assets/images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
       <div>
         <div class="nav-title">UC Sit-in System</div>
         <div class="nav-sub">Main Campus · CCS</div>
@@ -453,7 +453,7 @@ $initials = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
 
     // Check session on every page show (including back button)
     window.addEventListener('pageshow', function(e) {
-      fetch('../check_session.php', { cache: 'no-store' })
+      fetch('../includes/check_session.php', { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           if (!data.logged_in) {
