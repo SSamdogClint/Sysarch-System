@@ -16,7 +16,7 @@ if (empty($studentid)) {
 }
 
 $stmt = $conn->prepare(
-    'SELECT studentid, firstname, lastname, middlename, course, yearlvl, email, addrs
+    'SELECT studentid, firstname, lastname, middlename, course, yearlvl, email, addrs, session_credits
      FROM students WHERE studentid = ? LIMIT 1'
 );
 $stmt->bind_param('s', $studentid);
