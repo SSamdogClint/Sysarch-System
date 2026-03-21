@@ -2,12 +2,13 @@
 session_start();
 require_once 'config/db_config.php';
 
-if (empty($_SESSION['logged_in'])) {
-    header('Location: home.php');
+// Allow both student and admin
+if (empty($_SESSION['logged_in']) && empty($_SESSION['admin_logged_in'])) {
+    header('Location: login_page.php');
     exit;
 }
 
-$student_id = $_SESSION['student_id'];
+$student_id = (int)($_POST['student_id'] ?? $_SESSION['student_id'] ?? 0);
 $studentid  = trim($_POST['studentid']  ?? '');
 $lastname   = trim($_POST['lastname']   ?? '');
 $firstname  = trim($_POST['firstname']  ?? '');
@@ -24,17 +25,26 @@ $stmt = $conn->prepare(
 $stmt->bind_param('sssssissi', $studentid, $lastname, $firstname, $middlename, $course, $yearlvl, $email, $addrs, $student_id);
 
 if ($stmt->execute()) {
-    // Update session with new values
-    $_SESSION['studentid']  = $studentid;
-    $_SESSION['lastname']   = $lastname;
-    $_SESSION['firstname']  = $firstname;
-    $_SESSION['middlename'] = $middlename;
-    $_SESSION['course']     = $course;
-    $_SESSION['yearlvl']    = $yearlvl;
-    $_SESSION['email']      = $email;
-    $_SESSION['addrs']      = $addrs;
+    // Update session only if student is editing their own profile
+    if (!empty($_SESSION['logged_in'])) {
+        $_SESSION['studentid']  = $studentid;
+        $_SESSION['lastname']   = $lastname;
+        $_SESSION['firstname']  = $firstname;
+        $_SESSION['middlename'] = $middlename;
+        $_SESSION['course']     = $course;
+        $_SESSION['yearlvl']    = $yearlvl;
+        $_SESSION['email']      = $email;
+        $_SESSION['addrs']      = $addrs;
+    }
 }
 
 $stmt->close();
-header('Location: student_module/student_dashboard.php');
+
+// Redirect back to where they came from
+$redirect = $_POST['redirect'] ?? '';
+if ($redirect === 'admin') {
+    header('Location: admin_module/Admin_StudentList.php');
+} else {
+    header('Location: student_module/student_dashboard.php');
+}
 exit;
