@@ -14,6 +14,9 @@ if (empty($_SESSION['admin_logged_in'])) {
 require_once '../config/db_config.php';
 
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
+$add_errors  = $_SESSION['add_errors']  ?? [];
+$add_success = $_SESSION['add_success'] ?? '';
+unset($_SESSION['add_errors'], $_SESSION['add_success']);
 
 // Fetch all students
 $result   = $conn->query('SELECT id, studentid, lastname, firstname, middlename, course, yearlvl, session_credits FROM students ORDER BY lastname ASC');
@@ -333,6 +336,20 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
             placeholder="🔍  Search by name, ID, or course..."
             oninput="filterTable()">
         </div>
+        
+        <?php if (!empty($add_success)): ?>
+          <div style="margin:12px 20px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:8px;padding:10px 14px;font-size:13px;">
+            ✅ <?= htmlspecialchars($add_success) ?>
+          </div>
+        <?php endif; ?>
+
+        <?php if (!empty($add_errors)): ?>
+          <div style="margin:12px 20px;background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;">
+            <?php foreach ($add_errors as $e): ?>
+              <div>⚠️ <?= htmlspecialchars($e) ?></div>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
 
         <!-- Table -->
         <div style="overflow-x:auto;">
@@ -390,7 +407,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
 
         <!-- Action bar -->
         <div class="action-bar">
-          <button class="btn-add" onclick="alert('Add student — coming soon!')">
+          <button class="btn-add" onclick="openAddModal()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Student
           </button>
@@ -680,7 +697,258 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
     box-shadow:0 4px 16px rgba(0,0,0,0.15);">
     ✅ Sit-in registered successfully!
   </div>
+  <!-- ═══ EDIT STUDENT MODAL ═══ -->
+  <div id="editModal" style="
+    display:none; position:fixed; inset:0; z-index:999;
+    background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
 
+    <div style="
+      background:#fff; border-radius:16px; width:100%; max-width:540px;
+      max-height:90vh; overflow-y:auto; margin:1rem;
+      box-shadow:0 20px 60px rgba(0,0,0,0.2); font-family:'Poppins',sans-serif;">
+
+      <!-- Header -->
+      <div style="
+        background:#1d3a6e; color:#fff; padding:16px 24px;
+        border-radius:16px 16px 0 0; display:flex;
+        align-items:center; justify-content:space-between;">
+        <span style="font-size:14px; font-weight:600;">Edit Student Profile</span>
+        <button onclick="closeEditModal()" style="
+          background:transparent; border:none; color:#fff;
+          font-size:20px; cursor:pointer; line-height:1;">✕</button>
+      </div>
+
+      <!-- Form -->
+      <form action="../update_profile.php" method="post" style="padding:24px;">
+        <input type="hidden" name="student_id" id="editStudentId">
+        <input type="hidden" name="redirect" value="admin">
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Student ID</label>
+          <input type="text" name="studentid" id="editStudentid" style="
+            width:100%;border:1px solid #e5e7eb;border-radius:8px;
+            padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+            outline:none;color:#111827;">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Last Name</label>
+            <input type="text" name="lastname" id="editLastname" style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
+            <input type="text" name="firstname" id="editFirstname" style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;">
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Middle Name</label>
+          <input type="text" name="middlename" id="editMiddlename" style="
+            width:100%;border:1px solid #e5e7eb;border-radius:8px;
+            padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+            outline:none;color:#111827;">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Course</label>
+            <input type="text" name="course" id="editCourse" style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Year Level</label>
+            <select name="yearlvl" id="editYearlvl" style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;background:#fff;">
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Email</label>
+          <input type="email" name="email" id="editEmail" style="
+            width:100%;border:1px solid #e5e7eb;border-radius:8px;
+            padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+            outline:none;color:#111827;">
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Address</label>
+          <input type="text" name="addrs" id="editAddrs" style="
+            width:100%;border:1px solid #e5e7eb;border-radius:8px;
+            padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+            outline:none;color:#111827;">
+        </div>
+
+        <div id="editLoadingMsg" style="display:none;font-size:12px;color:#6b7280;margin-bottom:10px;">
+          Loading student data...
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" onclick="closeEditModal()" style="
+            padding:9px 20px;border:1px solid #d1d5db;border-radius:8px;
+            background:#fff;font-size:13px;font-weight:500;
+            font-family:'Poppins',sans-serif;cursor:pointer;color:#374151;">
+            Cancel
+          </button>
+          <button type="submit" style="
+            padding:9px 24px;background:#1d3a6e;color:#fff;
+            border:none;border-radius:8px;font-size:13px;font-weight:600;
+            font-family:'Poppins',sans-serif;cursor:pointer;">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ ADD STUDENT MODAL ═══ -->
+  <div id="addModal" style="
+    display:none; position:fixed; inset:0; z-index:999;
+    background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+
+    <div style="
+      background:#fff; border-radius:16px; width:100%; max-width:540px;
+      max-height:90vh; overflow-y:auto; margin:1rem;
+      box-shadow:0 20px 60px rgba(0,0,0,0.2); font-family:'Poppins',sans-serif;">
+
+      <!-- Header -->
+      <div style="
+        background:#1d3a6e; color:#fff; padding:16px 24px;
+        border-radius:16px 16px 0 0; display:flex;
+        align-items:center; justify-content:space-between;">
+        <span style="font-size:14px; font-weight:600;">
+          <svg style="margin-right:6px;vertical-align:-3px;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Add Student
+        </span>
+        <button onclick="closeAddModal()" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      </div>
+
+      <!-- Form -->
+      <form action="../includes/add_student.php" method="post" style="padding:24px;">
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Student ID</label>
+          <input type="text" name="studentid" placeholder="e.g. 2024-00001" required style="
+            width:100%;border:1px solid #e5e7eb;border-radius:8px;
+            padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+            outline:none;color:#111827;">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Last Name</label>
+            <input type="text" name="lastname" placeholder="Dela Cruz" required style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
+            <input type="text" name="firstname" placeholder="Juan" required style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;">
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Middle Name <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+          <input type="text" name="middlename" placeholder="Santos" style="
+            width:100%;border:1px solid #e5e7eb;border-radius:8px;
+            padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+            outline:none;color:#111827;">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Course</label>
+            <input type="text" name="course" placeholder="BSIT, BSCS..." required style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Year Level</label>
+            <select name="yearlvl" style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;background:#fff;">
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Email</label>
+          <input type="email" name="email" placeholder="you@uc.edu.ph" required style="
+            width:100%;border:1px solid #e5e7eb;border-radius:8px;
+            padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+            outline:none;color:#111827;">
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Address</label>
+          <input type="text" name="addrs" placeholder="Cebu City" style="
+            width:100%;border:1px solid #e5e7eb;border-radius:8px;
+            padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+            outline:none;color:#111827;">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Password</label>
+            <input type="password" name="pswd" placeholder="At least 8 characters" required style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Confirm Password</label>
+            <input type="password" name="conpswd" placeholder="Re-enter password" required style="
+              width:100%;border:1px solid #e5e7eb;border-radius:8px;
+              padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;
+              outline:none;color:#111827;">
+          </div>
+        </div>
+
+        <div id="addError" style="display:none;background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;"></div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" onclick="closeAddModal()" style="
+            padding:9px 20px;border:1px solid #d1d5db;border-radius:8px;
+            background:#fff;font-size:13px;font-weight:500;
+            font-family:'Poppins',sans-serif;cursor:pointer;color:#374151;">
+            Cancel
+          </button>
+          <button type="submit" style="
+            padding:9px 24px;background:#1d3a6e;color:#fff;
+            border:none;border-radius:8px;font-size:13px;font-weight:600;
+            font-family:'Poppins',sans-serif;cursor:pointer;">
+            Add Student
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Back button protection
@@ -706,10 +974,44 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       });
     }
 
-    // ── Edit ──
+    // ── Edit Modal ──
     function editStudent(id) {
-      alert('Edit student ID ' + id + ' — coming soon!');
+      document.getElementById('editLoadingMsg').style.display = 'block';
+      document.getElementById('editModal').style.display = 'flex';
+
+      fetch(`../includes/get_student.php?id=${id}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('editLoadingMsg').style.display = 'none';
+          if (!data.success) {
+            alert('Failed to load student data.');
+            closeEditModal();
+            return;
+          }
+          const s = data.student;
+          document.getElementById('editStudentId').value  = s.id;
+          document.getElementById('editStudentid').value  = s.studentid;
+          document.getElementById('editLastname').value   = s.lastname;
+          document.getElementById('editFirstname').value  = s.firstname;
+          document.getElementById('editMiddlename').value = s.middlename;
+          document.getElementById('editCourse').value     = s.course;
+          document.getElementById('editYearlvl').value    = s.yearlvl;
+          document.getElementById('editEmail').value      = s.email;
+          document.getElementById('editAddrs').value      = s.addrs;
+        })
+        .catch(() => {
+          alert('Something went wrong loading student data.');
+          closeEditModal();
+        });
     }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    document.getElementById('editModal').addEventListener('click', function(e) {
+      if (e.target === this) closeEditModal();
+    });
 
     // ── Delete ──
     let deleteTargetId = null;
@@ -965,6 +1267,19 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
     document.getElementById('sitinModal').addEventListener('click', function(e) {
       if (e.target === this) closeSitinModal();
     });
+
+    function openAddModal() {
+      document.getElementById('addModal').style.display = 'flex';
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').style.display = 'none';
+    }
+
+    document.getElementById('addModal').addEventListener('click', function(e) {
+      if (e.target === this) closeAddModal();
+    });
+    
   </script>
 </body>
 </html>
