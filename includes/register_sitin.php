@@ -36,15 +36,18 @@ if ($student['session_credits'] <= 0) {
 
 $fullname = $student['lastname'] . ', ' . $student['firstname'];
 
-// Insert sit-in record
-$stmt = $conn->prepare('INSERT INTO sitin_records (student_id, studentid, fullname, purpose, lab) VALUES (?, ?, ?, ?, ?)');
-$stmt->bind_param('issss', $student['id'], $studentid, $fullname, $purpose, $lab);
+// Set previous active records to 'done'
+$stmt = $conn->prepare("UPDATE sitin_records SET status = 'done' WHERE student_id = ? AND status = 'active'");
+$stmt->bind_param('i', $student['id']);
 $stmt->execute();
 $stmt->close();
 
-// Deduct 1 session credit
-$stmt = $conn->prepare('UPDATE students SET session_credits = session_credits - 1 WHERE id = ?');
-$stmt->bind_param('i', $student['id']);
+// Insert new sit-in record — NO deduction yet
+$stmt = $conn->prepare(
+    'INSERT INTO sitin_records (student_id, studentid, fullname, purpose, lab, session_at_sitin)
+     VALUES (?, ?, ?, ?, ?, ?)'
+);
+$stmt->bind_param('issssi', $student['id'], $studentid, $fullname, $purpose, $lab, $student['session_credits']);
 $stmt->execute();
 $stmt->close();
 

@@ -8,6 +8,7 @@ if (empty($_SESSION['admin_logged_in'])) {
     exit;
 }
 
+// ONLY reset session credits — never touch sitin_records
 $conn->query('UPDATE students SET session_credits = 30');
 
 echo json_encode(['success' => true]);

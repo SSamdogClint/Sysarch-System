@@ -98,16 +98,20 @@ CREATE TABLE IF NOT EXISTS students (
 
 -- Sit-in records table
 CREATE TABLE IF NOT EXISTS sitin_records (
-  id          INT          AUTO_INCREMENT PRIMARY KEY,
-  student_id  INT          NOT NULL,
-  studentid   VARCHAR(20)  NOT NULL,
-  fullname    VARCHAR(150) NOT NULL,
-  purpose     VARCHAR(100) NOT NULL,
-  lab         VARCHAR(50)  NOT NULL,
-  login_time  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-  status      VARCHAR(20)  DEFAULT 'active',
+  id               INT          AUTO_INCREMENT PRIMARY KEY,
+  student_id       INT          NOT NULL,
+  studentid        VARCHAR(20)  NOT NULL,
+  fullname         VARCHAR(150) NOT NULL,
+  purpose          VARCHAR(100) NOT NULL,
+  lab              VARCHAR(50)  NOT NULL,
+  session_at_sitin INT          NOT NULL DEFAULT 0,
+  login_time       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  status           VARCHAR(20)  DEFAULT 'active',
   FOREIGN KEY (student_id) REFERENCES students(id)
 );
+
+-- incase you created the table before i have changes in sitin records table
+ALTER TABLE sitin_records ADD COLUMN session_at_sitin INT NOT NULL DEFAULT 0;
 ```
 
 ---
