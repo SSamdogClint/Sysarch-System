@@ -1,4 +1,5 @@
 <?php
+// includes/register_sitin.php
 session_start();
 require_once '../config/db_config.php';
 header('Content-Type: application/json');

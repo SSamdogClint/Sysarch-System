@@ -1,4 +1,5 @@
 <?php
+// register_handler.php
 session_start();
 require_once 'config/db_config.php';
 

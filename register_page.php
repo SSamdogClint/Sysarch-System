@@ -1,4 +1,5 @@
 <?php
+// register_page.php
 session_start();
 $old = $_SESSION['reg_old'] ?? [];
 unset($_SESSION['reg_old']);

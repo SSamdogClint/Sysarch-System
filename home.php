@@ -1,4 +1,5 @@
 <?php
+// home.php
 session_start();
 $loggedIn  = !empty($_SESSION['logged_in']);
 $firstname = htmlspecialchars($_SESSION['firstname'] ?? '');

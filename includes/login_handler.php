@@ -1,9 +1,10 @@
 <?php
+// includes/login_handler.php
 session_start();
 require_once __DIR__ . '/../config/db_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: login_page.php');
+    header('Location: ../login_page.php');
     exit;
 }
 
@@ -12,7 +13,7 @@ $pswd      = $_POST['pswd']           ?? '';
 
 if (empty($studentid) || empty($pswd)) {
     $_SESSION['login_error'] = 'ID Number and password are required.';
-    header('Location: login_page.php');
+    header('Location: ../login_page.php');
     exit;
 }
 
@@ -27,9 +28,10 @@ if ($studentid === 'admin' && $pswd === 'admin123') {
 
 // ── Otherwise check student in database ──
 $stmt = $conn->prepare(
-    'SELECT id, studentid, firstname, lastname, course, yearlvl, email, addrs, password
+    'SELECT id, studentid, firstname, lastname, course, yearlvl, email, addrs, password, session_credits
      FROM students WHERE studentid = ? LIMIT 1'
 );
+
 $stmt->bind_param('s', $studentid);
 $stmt->execute();
 $student = $stmt->get_result()->fetch_assoc();
@@ -37,7 +39,7 @@ $stmt->close();
 
 if (!$student || !password_verify($pswd, $student['password'])) {
     $_SESSION['login_error'] = 'Invalid ID number or password.';
-    header('Location: login_page.php');
+    header('Location: ../login_page.php');
     exit;
 }
 
@@ -51,7 +53,7 @@ $_SESSION['course']          = $student['course'];
 $_SESSION['yearlvl']         = $student['yearlvl'];
 $_SESSION['email']           = $student['email'];
 $_SESSION['addrs']           = $student['addrs'];
-$_SESSION['session_credits'] = 30;
+$_SESSION['session_credits'] = $student['session_credits'];
 
 header('Location: /Sysarch-System/student_module/student_dashboard.php');
 exit;

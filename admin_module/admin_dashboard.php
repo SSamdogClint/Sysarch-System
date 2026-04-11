@@ -1,4 +1,5 @@
 <?php
+// admin_module/admin_dashboard.php
 session_start();
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -10,6 +11,8 @@ if (empty($_SESSION['admin_logged_in'])) {
     header('Location: ../login_page.php');
     exit;
 }
+
+require_once '../includes/dashboard_stats.php';
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
 ?>
 <!DOCTYPE html>
@@ -259,15 +262,15 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
         <div>
           <div class="stat-counters">
             <div class="stat-counter-card">
-              <div class="stat-counter-val">38</div>
+              <div class="stat-counter-val"><?= $total_students ?></div>
               <div class="stat-counter-lbl">Students Registered</div>
             </div>
             <div class="stat-counter-card green">
-              <div class="stat-counter-val">0</div>
-              <div class="stat-counter-lbl">Currently Sit-in</div>
+              <div class="stat-counter-val"><?= $current_sitin ?></div>
+              <div class="stat-counter-lbl">Currently Sit-in</div>>
             </div>
             <div class="stat-counter-card amber">
-              <div class="stat-counter-val">15</div>
+              <div class="stat-counter-val"><?= $total_sitin ?></div>
               <div class="stat-counter-lbl">Total Sit-in</div>
             </div>
           </div>
@@ -287,11 +290,18 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
               <svg style="margin-right:6px; vertical-align:-2px;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               Announcements
             </h4>
-            <span id="postCountLabel" style="font-size:12px; color:#9ca3af;">2 posted</span>
+            <span id="postCountLabel" style="font-size:12px; color:#9ca3af;"><?= $total_posts ?> posted</span>
           </div>
 
           <div class="compose-area">
             <span class="compose-label">New announcement</span>
+            <input
+              type="text"
+              id="announceTitle"
+              class="announce-textarea"
+              placeholder="Announcement title (optional)"
+              style="height: 46px; margin-bottom: 10px;"
+            >
             <textarea class="announce-textarea" id="announceText" placeholder="Write something for students to see…"></textarea>
             <div class="compose-footer">
               <button class="btn-post" onclick="postAnnouncement()">
@@ -554,56 +564,106 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
       }
     });
 
-    // Doughnut chart
     const ctx = document.getElementById('languageChart').getContext('2d');
+
     new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['C#', 'C', 'Java', 'ASP.Net', 'PHP'],
+        labels: <?= json_encode($chart_labels) ?>,
         datasets: [{
-          data: [25, 20, 20, 20, 15],
-          backgroundColor: ['#3b82f6','#f97316','#ec4899','#eab308','#06b6d4'],
-          borderColor: '#fff', borderWidth: 3, hoverOffset: 6,
+          data: <?= json_encode($chart_values) ?>,
+          backgroundColor: ['#3b82f6', '#f97316', '#ec4899', '#eab308', '#06b6d4'],
+          borderColor: '#fff',
+          borderWidth: 3,
+          hoverOffset: 6
         }]
       },
       options: {
-        responsive: true, maintainAspectRatio: false, cutout: '55%',
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '55%',
         plugins: {
           legend: {
             position: 'bottom',
-            labels: { font: { family: 'Poppins', size: 12 }, boxWidth: 12, padding: 14 }
+            labels: {
+              font: { family: 'Poppins', size: 12 },
+              boxWidth: 12,
+              padding: 14
+            }
           },
           tooltip: {
             bodyFont: { family: 'Poppins' },
-            titleFont: { family: 'Poppins', weight: '600' },
-            callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` }
+            titleFont: { family: 'Poppins', weight: '600' }
           }
         }
       }
     });
 
     // Post announcement
-    let postCount = 2;
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+
     function postAnnouncement() {
-      const text = document.getElementById('announceText').value.trim();
-      if (!text) return;
-      const now = new Date();
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const dateStr = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
-      const item = document.createElement('div');
-      item.className = 'feed-item';
-      item.innerHTML = `
-        <div class="feed-top">
-          <div class="feed-avatar">CA</div>
-          <span class="feed-author">CCS Admin</span>
-          <span class="feed-date">${dateStr}</span>
-        </div>
-        <div class="feed-body">${text}</div>
-      `;
-      document.getElementById('announceList').insertBefore(item, announceList.firstChild);
-      document.getElementById('announceText').value = '';
-      postCount++;
-      document.getElementById('postCountLabel').textContent = `${postCount} posted`;
+      const title = document.getElementById('announceTitle').value.trim();
+      const text  = document.getElementById('announceText').value.trim();
+
+      if (!text) {
+        alert('Please enter an announcement.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('message', text);
+
+      fetch('../includes/post_announcement.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          alert(data.message || 'Failed to post announcement.');
+          return;
+        }
+
+        const a = data.announcement;
+        const item = document.createElement('div');
+        item.className = 'feed-item';
+        item.innerHTML = `
+          <div class="feed-top">
+            <div class="feed-avatar">CA</div>
+            <span class="feed-author">${escapeHtml(a.posted_by)}</span>
+            <span class="feed-date">${formatDate(a.created_at)}</span>
+          </div>
+          ${a.title ? `<div style="font-weight:700; margin-bottom:4px;">${escapeHtml(a.title)}</div>` : ''}
+          <div class="feed-body">${escapeHtml(a.message)}</div>
+        `;
+
+        const list = document.getElementById('announceList');
+        list.insertBefore(item, list.firstChild);
+
+        document.getElementById('announceTitle').value = '';
+        document.getElementById('announceText').value = '';
+
+        const currentCount = list.querySelectorAll('.feed-item').length;
+        document.getElementById('postCountLabel').textContent = `${currentCount} posted`;
+      })
+      .catch(() => {
+        alert('Something went wrong. Please try again.');
+      });
     }
 
     //search modal

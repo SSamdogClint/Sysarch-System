@@ -1,4 +1,5 @@
 <?php
+// update_profile.php
 session_start();
 require_once 'config/db_config.php';
 
