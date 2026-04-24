@@ -1,4 +1,5 @@
 <?php
+// student_module/sitin_history.php
 session_start();
 require_once '../config/db_config.php';
 
@@ -21,7 +22,7 @@ $email      = htmlspecialchars($_SESSION['email'] ?? '');
 $addrs      = htmlspecialchars($_SESSION['addrs'] ?? '');
 $initials   = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
 
-require_once '../includes/student_notifications.php';
+require_once '../controllers/announcements/student_notifications.php';
 
 $records = [];
 $stmt = $conn->prepare("
@@ -687,7 +688,7 @@ $done_count    = count(array_filter($records, fn($r) => $r['status'] === 'done')
       </span>
 
       <div class="nav-divider"></div>
-      <a class="nav-link" href="../logout.php">Log out</a>
+      <a class="nav-link" href="../controllers/auth/logout.php">Log out</a>
     </div>
   </nav>
 
@@ -808,7 +809,11 @@ $done_count    = count(array_filter($records, fn($r) => $r['status'] === 'done')
       </div>
 
       <div style="padding:24px;">
-        <form action="edit_profile.php" method="POST">
+        <form action="../controllers/student/update_profile.php" method="POST">
+          <input type="hidden" name="student_id" value="<?= (int)$student_id ?>">
+          <input type="hidden" name="studentid" value="<?= htmlspecialchars($_SESSION['studentid'] ?? '') ?>">
+          <input type="hidden" name="middlename" value="<?= htmlspecialchars($_SESSION['middlename'] ?? '') ?>">
+          <input type="hidden" name="redirect" value="student">
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
             <input type="text" name="firstname" value="<?= $firstname ?>" style="width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;">
@@ -901,6 +906,12 @@ $done_count    = count(array_filter($records, fn($r) => $r['status'] === 'done')
   </div>
 
   <script>
+    window.addEventListener("pageshow", function (event) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
+    
     document.getElementById('navToggler').addEventListener('click', () => {
       document.getElementById('navLinks').classList.toggle('open');
       document.getElementById('sidebar').classList.toggle('open');
@@ -1236,7 +1247,7 @@ $done_count    = count(array_filter($records, fn($r) => $r['status'] === 'done')
       formData.append('issue_type', issueType);
       formData.append('feedback_text', feedbackText);
 
-      fetch('../includes/save_feedback.php', {
+      fetch('../controllers/sitin/save_feedback.php', {
         method: 'POST',
         body: formData
       })

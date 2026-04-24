@@ -1,16 +1,22 @@
 <?php
+// controllers/announcements/post_announcement.php
+
 session_start();
-require_once '../config/db_config.php';
+require_once '../../config/db_config.php';
+
 header('Content-Type: application/json');
 
+// Check admin session
 if (empty($_SESSION['admin_logged_in'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
     exit;
 }
 
+// Get data
 $message = trim($_POST['message'] ?? '');
 $title   = trim($_POST['title'] ?? '');
 
+// Validate
 if ($message === '') {
     echo json_encode(['success' => false, 'message' => 'Announcement message is required.']);
     exit;
@@ -18,6 +24,7 @@ if ($message === '') {
 
 $posted_by = $_SESSION['admin_name'] ?? 'CCS Admin';
 
+// Insert
 $stmt = $conn->prepare("
     INSERT INTO announcements (title, message, posted_by)
     VALUES (?, ?, ?)

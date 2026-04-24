@@ -1,7 +1,9 @@
-// includes/delete_student.php
 <?php
+// controllers/student/delete_student.php
+
 session_start();
-require_once '../config/db_config.php';
+require_once '../../config/db_config.php';
+
 header('Content-Type: application/json');
 
 if (empty($_SESSION['admin_logged_in'])) {
@@ -16,7 +18,7 @@ if (!$student_id) {
     exit;
 }
 
-// Delete sit-in records first (foreign key)
+// Delete sit-in records first
 $stmt = $conn->prepare('DELETE FROM sitin_records WHERE student_id = ?');
 $stmt->bind_param('i', $student_id);
 $stmt->execute();
@@ -25,7 +27,12 @@ $stmt->close();
 // Delete student
 $stmt = $conn->prepare('DELETE FROM students WHERE id = ?');
 $stmt->bind_param('i', $student_id);
-$stmt->execute();
-$stmt->close();
 
-echo json_encode(['success' => true]);
+if ($stmt->execute()) {
+    echo json_encode(['success' => true]);
+} else {
+    echo json_encode(['success' => false, 'message' => 'Failed to delete student.']);
+}
+
+$stmt->close();
+exit;

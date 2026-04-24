@@ -112,6 +112,17 @@ CREATE TABLE IF NOT EXISTS sitin_records (
 
 -- incase you created the table before i have changes in sitin records table
 ALTER TABLE sitin_records ADD COLUMN session_at_sitin INT NOT NULL DEFAULT 0;
+
+-- create feedback table
+CREATE TABLE feedback (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sitin_id INT NOT NULL,
+    student_id INT NOT NULL,
+    issue_type VARCHAR(100) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sitin_id) REFERENCES sitin_records(id) ON DELETE CASCADE
+);
 ```
 
 ---

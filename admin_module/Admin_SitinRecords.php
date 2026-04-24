@@ -335,7 +335,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
     <div class="nav-links" id="navLinks">
       <span style="font-size:13px;color:#6b7280;padding:0 8px;"><?= $admin_name ?></span>
       <div class="nav-divider"></div>
-      <a class="nav-link" href="../logout.php?type=admin">Log out</a>
+      <a class="nav-link" href="../controllers/auth/logout.php?type=admin">Log out</a>
     </div>
   </nav>
 
@@ -669,7 +669,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
 
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) {
-        fetch('../includes/check_session.php?type=admin', { cache: 'no-store' })
+        fetch('../controllers/auth/check_session.php?type=admin', { cache: 'no-store' })
           .then(res => res.json())
           .then(data => { if (!data.logged_in) window.location.replace('../home.php'); });
       }
@@ -854,7 +854,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       const fd = new FormData();
       fd.append('record_id', deactivateTargetId);
 
-      fetch('../includes/deactivate_sitin.php', { method: 'POST', body: fd })
+      fetch('../controllers/sitin/deactivate_sitin.php', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
           closeDeactivateModal();
@@ -891,7 +891,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       const fd = new FormData();
       fd.append('record_id', deleteTargetId);
 
-      fetch('../includes/delete_sitin.php', { method: 'POST', body: fd })
+      fetch('../controllers/sitin/delete_sitin.php', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
           closeDeleteModal();
@@ -933,7 +933,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       document.getElementById('searchResult').style.display = 'none';
       document.getElementById('searchError').style.display = 'none';
       document.getElementById('searchLoading').style.display = 'block';
-      fetch(`../includes/search_student.php?studentid=${encodeURIComponent(id)}`)
+      fetch(`../controllers/student/search_student.php?studentid=${encodeURIComponent(id)}`)
         .then(res => res.json())
         .then(data => {
           document.getElementById('searchLoading').style.display = 'none';
@@ -978,7 +978,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
     function lookupStudent() {
       const id = document.getElementById('sitinIdInput').value.trim();
       if (!id) { showSitinError('sitinLookupError', 'Please enter a Student ID.'); return; }
-      fetch(`../includes/search_student.php?studentid=${encodeURIComponent(id)}`)
+      fetch(`../controllers/student/search_student.php?studentid=${encodeURIComponent(id)}`)
         .then(res => res.json())
         .then(data => {
           if (!data.found) { showSitinError('sitinLookupError', 'No student found with that ID.'); return; }
@@ -1005,7 +1005,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       formData.append('studentid', currentStudent.studentid);
       formData.append('purpose',   purpose);
       formData.append('lab',       lab);
-      fetch('../includes/register_sitin.php', { method: 'POST', body: formData })
+      fetch('../controllers/sitin/register_sitin.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
           if (!data.success) { showSitinError('sitinSubmitError', data.message || 'Failed to register sit-in.'); return; }

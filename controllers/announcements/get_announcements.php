@@ -1,10 +1,13 @@
 <?php
+// controllers/announcements/get_announcements.php
+
 session_start();
-require_once '../config/db_config.php';
+require_once '../../config/db_config.php';
 
 header('Content-Type: application/json');
 
-if (empty($_SESSION['logged_in'])) {
+// Allow both student and admin
+if (empty($_SESSION['logged_in']) && empty($_SESSION['admin_logged_in'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Unauthorized']);
     exit;
@@ -24,4 +27,6 @@ if ($result) {
     }
 }
 
+// Return JSON
 echo json_encode($announcements);
+exit;

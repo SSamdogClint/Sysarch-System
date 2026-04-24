@@ -1,6 +1,7 @@
 <?php
+// student_module/student_dashboard.php
 session_start();
-require_once '../config/db_config.php';
+require_once __DIR__ . '/../controllers/announcements/student_notifications.php';
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
@@ -23,7 +24,7 @@ $addrs      = htmlspecialchars($_SESSION['addrs'] ?? '');
 $fullname = $lastname . ', ' . $firstname;
 $initials = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
 
-/* FIX: get latest session credits from DB, not from session */
+/* FIX: always get latest session credits from database */
 $session_credits = 0;
 $stmtCredits = $conn->prepare("SELECT session_credits FROM students WHERE id = ? LIMIT 1");
 $stmtCredits->bind_param('i', $student_id);
@@ -34,7 +35,7 @@ if ($rowCredits = $resCredits->fetch_assoc()) {
 }
 $stmtCredits->close();
 
-require_once '../includes/student_notifications.php';
+require_once '../controllers/announcements/student_notifications.php';
 
 $announcements = [];
 $announcement_feed_result = $conn->query("
@@ -62,525 +63,8 @@ if ($announcement_feed_result) {
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/css/style.css">
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      background:
-        radial-gradient(circle at top left, #dbeafe 0%, transparent 30%),
-        radial-gradient(circle at top right, #e0e7ff 0%, transparent 35%),
-        #eef2f7;
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      color: #111827;
-    }
-
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .sidebar.open {
-        display: block;
-        width: 100%;
-        position: fixed;
-        top: 60px;
-        left: 0;
-        bottom: 0;
-        z-index: 99;
-        overflow-y: auto;
-      }
-      .admin-main { padding: 1rem; }
-      .dashboard-shell { padding: 1rem; }
-    }
-
-    .dashboard-shell {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 18px;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, #1d3a6e 0%, #1d4ed8 100%);
-      color: #fff;
-      border-radius: 22px;
-      padding: 24px 26px;
-      margin-bottom: 18px;
-      box-shadow: 0 16px 40px rgba(29, 78, 216, 0.18);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-    }
-
-    .hero-left h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-
-    .hero-left p {
-      margin: 0;
-      font-size: 13px;
-      color: #dbeafe;
-      max-width: 650px;
-      line-height: 1.7;
-    }
-
-    .hero-badges {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .hero-pill {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.18);
-      color: #fff;
-      padding: 9px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      backdrop-filter: blur(8px);
-    }
-
-    .dashboard {
-      display: grid;
-      grid-template-columns: 340px 1fr 320px;
-      gap: 18px;
-      align-items: start;
-    }
-
-    @media (max-width: 1180px) {
-      .dashboard {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .dashboard {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-      border: 1px solid rgba(255,255,255,0.7);
-    }
-
-    .panel-header {
-      background: linear-gradient(135deg, #1d3a6e 0%, #274a86 100%);
-      color: #fff;
-      padding: 12px 16px;
-      font-size: 13px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .panel-body {
-      padding: 18px;
-    }
-
-    .student-card-top {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding-bottom: 16px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid #eef2f7;
-    }
-
-    .student-avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #1d3a6e, #2563eb);
-      color: #fff;
-      font-size: 30px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 4px solid #fff;
-      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.20);
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
-
-    .student-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .student-name {
-      font-size: 18px;
-      font-weight: 800;
-      color: #111827;
-      margin-bottom: 4px;
-    }
-
-    .student-sub {
-      font-size: 12px;
-      color: #6b7280;
-    }
-
-    .info-grid {
-      display: grid;
-      gap: 10px;
-    }
-
-    .info-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 12px 13px;
-      font-size: 13px;
-      color: #374151;
-    }
-
-    .info-icon {
-      flex-shrink: 0;
-      width: 16px;
-      color: #1d4ed8;
-      margin-top: 2px;
-    }
-
-    .info-label {
-      font-weight: 700;
-      color: #111827;
-      margin-right: 4px;
-    }
-
-    .credit-badge {
-      margin-top: 16px;
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      border: 1px solid #bfdbfe;
-      border-radius: 18px;
-      padding: 16px;
-      text-align: center;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
-    }
-
-    .credit-badge small {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .6px;
-      color: #1d4ed8;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-
-    .credit-badge strong {
-      display: block;
-      font-size: 34px;
-      line-height: 1;
-      font-weight: 800;
-      color: #1d3a6e;
-      margin-bottom: 6px;
-    }
-
-    .credit-badge span {
-      font-size: 13px;
-      color: #374151;
-      font-weight: 600;
-    }
-
-    .quick-links {
-      display: grid;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .quick-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      text-decoration: none;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 12px 14px;
-      color: #111827;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all .15s ease;
-    }
-
-    .quick-link:hover {
-      background: #eff6ff;
-      border-color: #bfdbfe;
-      transform: translateY(-1px);
-      color: #1d4ed8;
-    }
-
-    .announce-feed {
-      max-height: 560px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-
-    .announce-item {
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-
-    .announce-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .announce-title {
-      font-size: 14px;
-      font-weight: 800;
-      color: #111827;
-      margin-bottom: 6px;
-    }
-
-    .announce-meta {
-      font-size: 11px;
-      font-weight: 700;
-      color: #1d4ed8;
-      margin-bottom: 8px;
-    }
-
-    .announce-text {
-      font-size: 13px;
-      color: #4b5563;
-      line-height: 1.7;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .rules-body {
-      max-height: 560px;
-      overflow-y: auto;
-      font-size: 13px;
-      color: #374151;
-      line-height: 1.8;
-    }
-
-    .rules-body h2 {
-      font-size: 16px;
-      font-weight: 800;
-      text-align: center;
-      color: #111827;
-      margin-bottom: 4px;
-    }
-
-    .rules-body h3 {
-      font-size: 13px;
-      font-weight: 700;
-      text-align: center;
-      color: #6b7280;
-      margin-bottom: 1rem;
-    }
-
-    .rules-body h4 {
-      font-size: 13px;
-      font-weight: 800;
-      color: #111827;
-      margin: 1rem 0 0.45rem;
-    }
-
-    .rules-body p {
-      margin-bottom: 0.7rem;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .notif-dropdown {
-      position: relative;
-    }
-
-    .notif-bell-btn {
-      position: relative;
-      width: 38px;
-      height: 38px;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.18s ease;
-    }
-
-    .notif-bell-btn:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-      transform: translateY(-1px);
-    }
-
-    .notif-bell-btn svg {
-      width: 18px;
-      height: 18px;
-      color: #1d3a6e;
-    }
-
-    .notif-bell-btn.has-new svg {
-      animation: bellRing 1.2s ease-in-out infinite;
-      transform-origin: top center;
-    }
-
-    @keyframes bellRing {
-      0%, 100% { transform: rotate(0deg); }
-      10% { transform: rotate(12deg); }
-      20% { transform: rotate(-10deg); }
-      30% { transform: rotate(8deg); }
-      40% { transform: rotate(-6deg); }
-      50% { transform: rotate(4deg); }
-      60% { transform: rotate(-2deg); }
-      70% { transform: rotate(0deg); }
-    }
-
-    .notif-dot {
-      position: absolute;
-      top: 5px;
-      right: 6px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #ef4444;
-      border: 2px solid #fff;
-      display: none;
-    }
-
-    .notif-dot.show {
-      display: block;
-      animation: bellPulse 1.2s infinite;
-    }
-
-    @keyframes bellPulse {
-      0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
-      70%  { transform: scale(1.15); box-shadow: 0 0 0 10px rgba(239,68,68,0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0); }
-    }
-
-    .notif-menu {
-      display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      width: 320px;
-      max-height: 360px;
-      overflow-y: auto;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.14);
-      z-index: 3000;
-    }
-
-    .notif-menu.open {
-      display: block;
-    }
-
-    .notif-menu-header {
-      padding: 12px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #1d3a6e;
-      border-bottom: 1px solid #f3f4f6;
-      background: #f8fafc;
-    }
-
-    .notif-menu-item {
-      padding: 12px 14px;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .notif-menu-item:last-child {
-      border-bottom: none;
-    }
-
-    .notif-menu-item:hover {
-      background: #f9fafb;
-    }
-
-    .notif-type {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 999px;
-      margin-bottom: 6px;
-    }
-
-    .notif-type.announcement {
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    .notif-type.session {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .notif-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 4px;
-    }
-
-    .notif-text {
-      font-size: 12px;
-      color: #4b5563;
-      line-height: 1.5;
-      margin-bottom: 5px;
-    }
-
-    .notif-time {
-      font-size: 11px;
-      color: #9ca3af;
-    }
-
-    .notif-empty {
-      padding: 18px 14px;
-      text-align: center;
-      font-size: 12px;
-      color: #9ca3af;
-    }
-
-    .announce-feed::-webkit-scrollbar,
-    .rules-body::-webkit-scrollbar,
-    .notif-menu::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .announce-feed::-webkit-scrollbar-track,
-    .rules-body::-webkit-scrollbar-track,
-    .notif-menu::-webkit-scrollbar-track {
-      background: #f3f4f6;
-    }
-
-    .announce-feed::-webkit-scrollbar-thumb,
-    .rules-body::-webkit-scrollbar-thumb,
-    .notif-menu::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 4px;
-    }
-  </style>
 </head>
-<body>
+<body class="student-dashboard-body">
 
   <nav class="uc-nav">
     <a class="nav-brand" href="student_dashboard.php">
@@ -630,7 +114,7 @@ if ($announcement_feed_result) {
       </span>
 
       <div class="nav-divider"></div>
-      <a class="nav-link" href="../logout.php">Log out</a>
+      <a class="nav-link" href="../controllers/auth/logout.php">Log out</a>
     </div>
   </nav>
 
@@ -677,6 +161,7 @@ if ($announcement_feed_result) {
 
     <main class="admin-main">
       <div class="dashboard-shell">
+
         <section class="hero">
           <div class="hero-left">
             <h1>Welcome back, <?= $firstname ?> 👋</h1>
@@ -693,9 +178,9 @@ if ($announcement_feed_result) {
           </div>
         </section>
 
-        <div class="dashboard">
+        <div class="dashboard student-dashboard-grid">
 
-          <div class="panel">
+          <div class="panel student-dashboard-panel">
             <div class="panel-header">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Student Information
@@ -759,7 +244,7 @@ if ($announcement_feed_result) {
             </div>
           </div>
 
-          <div class="panel">
+          <div class="panel student-dashboard-panel">
             <div class="panel-header">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
               Latest Announcements
@@ -782,7 +267,7 @@ if ($announcement_feed_result) {
             </div>
           </div>
 
-          <div class="panel">
+          <div class="panel student-dashboard-panel">
             <div class="panel-header">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               Laboratory Rules
@@ -841,7 +326,7 @@ if ($announcement_feed_result) {
       </div>
 
       <div style="padding:24px;">
-        <form action="edit_profile.php" method="POST">
+        <form action="../controllers/student/update_profile.php" method="POST">
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
             <input type="text" name="firstname" value="<?= $firstname ?>" style="
@@ -917,7 +402,7 @@ if ($announcement_feed_result) {
 
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) {
-        fetch('../includes/check_session.php', { cache: 'no-store' })
+        fetch('../controllers/auth/check_session.php', { cache: 'no-store' })
           .then(res => res.json())
           .then(data => {
             if (!data.logged_in) window.location.replace('../home.php');

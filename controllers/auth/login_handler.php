@@ -1,10 +1,10 @@
 <?php
-// includes/login_handler.php
+// controllers/auth/login_handler.php
 session_start();
-require_once __DIR__ . '/../config/db_config.php';
+require_once '../../config/db_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../login_page.php');
+    header('Location: ../../login_page.php');
     exit;
 }
 
@@ -13,7 +13,7 @@ $pswd      = $_POST['pswd']           ?? '';
 
 if (empty($studentid) || empty($pswd)) {
     $_SESSION['login_error'] = 'ID Number and password are required.';
-    header('Location: ../login_page.php');
+    header('Location: ../../login_page.php');
     exit;
 }
 
@@ -22,7 +22,7 @@ if ($studentid === 'admin' && $pswd === 'admin123') {
     session_regenerate_id(true);
     $_SESSION['admin_logged_in'] = true;
     $_SESSION['admin_name']      = 'Administrator';
-    header('Location: /Sysarch-System/admin_module/admin_dashboard.php');
+    header('Location: ../../admin_module/admin_dashboard.php');
     exit;
 }
 
@@ -39,7 +39,7 @@ $stmt->close();
 
 if (!$student || !password_verify($pswd, $student['password'])) {
     $_SESSION['login_error'] = 'Invalid ID number or password.';
-    header('Location: ../login_page.php');
+    header('Location: ../../login_page.php');
     exit;
 }
 
@@ -55,5 +55,5 @@ $_SESSION['email']           = $student['email'];
 $_SESSION['addrs']           = $student['addrs'];
 $_SESSION['session_credits'] = $student['session_credits'];
 
-header('Location: /Sysarch-System/student_module/student_dashboard.php');
+header('Location: ../../student_module/student_dashboard.php');
 exit;

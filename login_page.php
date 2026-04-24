@@ -66,7 +66,7 @@ session_start();
           <?php unset($_SESSION['reg_success']); ?>
         <?php endif; ?>
 
-        <form action="includes/login_handler.php" method="post">
+        <form action="controllers/auth/login_handler.php" method="post">
           <div class="field">
             <label for="studentid">ID Number</label>
             <input type="text" id="studentid" name="studentid" placeholder="e.g. 2024-00001" required

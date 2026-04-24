@@ -1,7 +1,9 @@
 <?php
-// includes/delete_sitin.php
+// controllers/sitin/delete_sitin.php
+
 session_start();
-require_once '../config/db_config.php';
+require_once '../../config/db_config.php';
+
 header('Content-Type: application/json');
 
 if (empty($_SESSION['admin_logged_in'])) {
@@ -24,4 +26,6 @@ if ($stmt->execute()) {
 } else {
     echo json_encode(['success' => false, 'message' => 'Failed to delete record.']);
 }
+
 $stmt->close();
+exit;

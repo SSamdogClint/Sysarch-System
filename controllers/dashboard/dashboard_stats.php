@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/../config/db_config.php';
+// controllers/dashboard/dashboard_stats.php
+require_once __DIR__ . '/../../config/db_config.php';
 
 // Total registered students
 $total_students = 0;

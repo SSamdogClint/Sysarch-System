@@ -113,7 +113,7 @@ unset($_SESSION['reg_old']);
           </div>
         </div>
 
-        <form id="registerForm" action="register_handler.php" method="post" novalidate>
+        <form id="registerForm" action="controllers/auth/register_handler.php" method="post" novalidate>
 
           <!-- Step 1: Student info -->
           <div class="step-panel active" id="step-1">

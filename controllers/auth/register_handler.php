@@ -1,10 +1,10 @@
-// includes/add_student.php
 <?php
+// controllers/auth/register_handler.php
 session_start();
-require_once '../config/db_config.php';
+require_once '../../config/db_config.php';
 
-if (empty($_SESSION['admin_logged_in'])) {
-    header('Location: ../login_page.php');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ../../register_page.php');
     exit;
 }
 
@@ -15,11 +15,10 @@ $middlename = trim($_POST['middlename'] ?? '');
 $course     = trim($_POST['course']     ?? '');
 $yearlvl    = (int)($_POST['yearlvl']  ?? 1);
 $email      = trim($_POST['email']      ?? '');
-$addrs      = trim($_POST['addrs']      ?? '');
 $pswd       = $_POST['pswd']            ?? '';
 $conpswd    = $_POST['conpswd']         ?? '';
+$addrs      = trim($_POST['addrs']      ?? '');
 
-// Validate
 $errors = [];
 if (empty($studentid))  $errors[] = 'Student ID is required.';
 if (empty($lastname))   $errors[] = 'Last name is required.';
@@ -31,8 +30,9 @@ if (strlen($pswd) < 8) $errors[] = 'Password must be at least 8 characters.';
 if ($pswd !== $conpswd) $errors[] = 'Passwords do not match.';
 
 if (!empty($errors)) {
-    $_SESSION['add_errors'] = $errors;
-    header('Location: ../admin_module/Admin_StudentList.php');
+    $_SESSION['reg_errors'] = $errors;
+    $_SESSION['reg_old'] = compact('studentid','lastname','firstname','middlename','course','yearlvl','email','addrs');
+    header('Location: ../../register_page.php');
     exit;
 }
 
@@ -42,9 +42,10 @@ $stmt->bind_param('ss', $studentid, $email);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {
-    $_SESSION['add_errors'] = ['Student ID or email already exists.'];
+    $_SESSION['reg_errors'] = ['Student ID or email already registered.'];
+    $_SESSION['reg_old'] = compact('studentid','lastname','firstname','middlename','course','yearlvl','email','addrs');
     $stmt->close();
-    header('Location: ../admin_module/Admin_StudentList.php');
+    header('Location: ../../register_page.php');
     exit;
 }
 $stmt->close();
@@ -58,11 +59,11 @@ $stmt = $conn->prepare(
 $stmt->bind_param('sssssisss', $studentid, $lastname, $firstname, $middlename, $course, $yearlvl, $email, $hashed, $addrs);
 
 if ($stmt->execute()) {
-    $_SESSION['add_success'] = 'Student added successfully!';
+    $_SESSION['reg_success'] = 'Account created! You can now log in.';
+    header('Location: ../../login_page.php');
 } else {
-    $_SESSION['add_errors'] = ['Something went wrong. Please try again.'];
+    $_SESSION['reg_errors'] = ['Something went wrong: ' . $conn->error];
+    header('Location: ../../register_page.php');
 }
 $stmt->close();
-
-header('Location: ../admin_module/Admin_StudentList.php');
 exit;

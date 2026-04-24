@@ -1,4 +1,5 @@
 <?php
+// student_module/announcements.php
 session_start();
 require_once '../config/db_config.php';
 
@@ -21,7 +22,7 @@ $email      = htmlspecialchars($_SESSION['email'] ?? '');
 $addrs      = htmlspecialchars($_SESSION['addrs'] ?? '');
 $initials   = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
 
-require_once '../includes/student_notifications.php';
+require_once '../controllers/announcements/student_notifications.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -418,7 +419,7 @@ require_once '../includes/student_notifications.php';
       </span>
 
       <div class="nav-divider"></div>
-      <a class="nav-link" href="../logout.php">Log out</a>
+      <a class="nav-link"href="../controllers/auth/logout.php">Log out</a>
     </div>
   </nav>
 
@@ -501,7 +502,7 @@ require_once '../includes/student_notifications.php';
       </div>
 
       <div style="padding:24px;">
-        <form action="edit_profile.php" method="POST">
+        <form action="../controllers/student/update_profile.php" method="POST">
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
             <input type="text" name="firstname" value="<?= $firstname ?>" style="width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;">
@@ -692,7 +693,7 @@ require_once '../includes/student_notifications.php';
       announceState.style.display = 'block';
       announceList.style.display = 'none';
 
-      fetch('../includes/get_announcement.php', { cache: 'no-store' })
+      fetch('../controllers/announcements/get_announcements.php', { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           if (!Array.isArray(data)) {

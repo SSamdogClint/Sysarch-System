@@ -1,11 +1,15 @@
 <?php
+// controllers/announcements/student_notifications.php
+
 if (!isset($conn)) {
-    die('Database connection is required in student_notifications.php');
+    require_once __DIR__ . '/../../config/db_config.php';
+} // ✅ THIS WAS MISSING
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-if (!isset($student_id)) {
-    $student_id = (int)($_SESSION['student_id'] ?? 0);
-}
+$student_id = (int)($_SESSION['student_id'] ?? 0);
 
 $notifications = [];
 
@@ -28,12 +32,11 @@ if ($announcement_result) {
     }
 }
 
-/* Student session notifications */
+/* Student active sessions */
 $notif_stmt = $conn->prepare("
-    SELECT purpose, lab, login_time, status
+    SELECT purpose, lab, login_time
     FROM sitin_records
-    WHERE student_id = ?
-      AND status = 'active'
+    WHERE student_id = ? AND status = 'active'
     ORDER BY login_time DESC
     LIMIT 5
 ");
@@ -47,7 +50,8 @@ if ($notif_stmt) {
         $notifications[] = [
             'type' => 'session',
             'title' => 'New session assigned',
-            'message' => 'A sit-in session for ' . ($row['purpose'] ?? 'Unknown Purpose') . ' in ' . ($row['lab'] ?? 'Unknown Lab') . ' is now active.',
+            'message' => 'A sit-in session for ' . ($row['purpose'] ?? 'Unknown Purpose') .
+                         ' in ' . ($row['lab'] ?? 'Unknown Lab') . ' is now active.',
             'created_at' => $row['login_time']
         ];
     }
@@ -60,5 +64,5 @@ usort($notifications, function ($a, $b) {
     return strtotime($b['created_at']) <=> strtotime($a['created_at']);
 });
 
+/* Limit to 8 */
 $notifications = array_slice($notifications, 0, 8);
-?>

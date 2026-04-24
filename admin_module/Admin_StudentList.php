@@ -273,7 +273,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
     <div class="nav-links" id="navLinks">
       <span style="font-size:13px;color:#6b7280;padding:0 8px;"><?= $admin_name ?></span>
       <div class="nav-divider"></div>
-      <a class="nav-link" href="../logout.php?type=admin">Log out</a>
+      <a class="nav-link" href="../controllers/auth/logout.php?type=admin">Log out</a>
     </div>
   </nav>
 
@@ -290,7 +290,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Search
       </a>
-      <a class="sidebar-link" href="Admin_StudentList.php">
+      <a class="sidebar-link active" href="Admin_StudentList.php">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Students
       </a>
@@ -720,7 +720,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       </div>
 
       <!-- Form -->
-      <form action="../update_profile.php" method="post" style="padding:24px;">
+      <form action="../controllers/student/update_profile.php" method="post" style="padding:24px;">
         <input type="hidden" name="student_id" id="editStudentId">
         <input type="hidden" name="redirect" value="admin">
 
@@ -840,7 +840,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       </div>
 
       <!-- Form -->
-      <form action="../includes/add_student.php" method="post" style="padding:24px;">
+      <form action="../controllers/student/add_student.php" method="post" style="padding:24px;">
 
         <div style="margin-bottom:14px;">
           <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Student ID</label>
@@ -955,7 +955,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
     // Back button protection
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) {
-        fetch('../includes/check_session.php?type=admin', { cache: 'no-store' })
+        fetch('../controllers/auth/check_session.php?type=admin', { cache: 'no-store' })
           .then(res => res.json())
           .then(data => {
             if (!data.logged_in) window.location.replace('../home.php');
@@ -980,7 +980,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       document.getElementById('editLoadingMsg').style.display = 'block';
       document.getElementById('editModal').style.display = 'flex';
 
-      fetch(`../includes/get_student.php?id=${id}`)
+      fetch(`../controllers/student/get_student.php?id=${id}`)
         .then(res => res.json())
         .then(data => {
           document.getElementById('editLoadingMsg').style.display = 'none';
@@ -1033,7 +1033,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       const fd = new FormData();
       fd.append('student_id', deleteTargetId);
 
-      fetch('/Sysarch-System/includes/delete_student.php', { method: 'POST', body: fd })
+      fetch('../controllers/student/delete_student.php', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
           closeDeleteModal();
@@ -1057,7 +1057,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
     }
 
     function resetAllSessions() {
-      fetch('/Sysarch-System/includes/reset_sessions.php', { method: 'POST' })
+      fetch('../controllers/student/reset_sessions.php', { method: 'POST' })
         .then(res => res.json())
         .then(data => {
           closeResetModal();
@@ -1118,7 +1118,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       document.getElementById('searchError').style.display = 'none';
       document.getElementById('searchLoading').style.display = 'block';
 
-      fetch(`../includes/search_student.php?studentid=${encodeURIComponent(id)}`)
+      fetch(`../controllers/student/search_student.php?studentid=${encodeURIComponent(id)}`)
         .then(res => res.json())
         .then(data => {
           document.getElementById('searchLoading').style.display = 'none';
@@ -1196,7 +1196,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
         return;
       }
 
-      fetch(`../includes/search_student.php?studentid=${encodeURIComponent(id)}`)
+      fetch(`../controllers/student/search_student.php?studentid=${encodeURIComponent(id)}`)
         .then(res => res.json())
         .then(data => {
           if (!data.found) {
@@ -1239,7 +1239,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
       formData.append('purpose',   purpose);
       formData.append('lab',       lab);
 
-      fetch('../includes/register_sitin.php', { method: 'POST', body: formData })
+      fetch('../controllers/sitin/register_sitin.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
           if (!data.success) {
