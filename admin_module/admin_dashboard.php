@@ -31,279 +31,15 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    body {
-      background: #eef0f5;
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        display: none;
-      }
-
-      .sidebar.open {
-        display: block;
-        width: 100%;
-        position: fixed;
-        top: 60px;
-        left: 0;
-        bottom: 0;
-        z-index: 99;
-        overflow-y: auto;
-      }
-
-      .admin-main {
-        padding: 1.25rem;
-      }
-    }
-
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 24px;
-      align-items: start;
-    }
-
-    @media (max-width: 960px) {
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .stat-counters {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .stat-counter-card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 1rem;
-      text-align: center;
-      border-top: 3px solid #1d4ed8;
-    }
-
-    .stat-counter-card.green {
-      border-top-color: #059669;
-    }
-
-    .stat-counter-card.amber {
-      border-top-color: #d97706;
-    }
-
-    .stat-counter-val {
-      font-size: 28px;
-      font-weight: 800;
-      color: #111827;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-
-    .stat-counter-lbl {
-      font-size: 11px;
-      font-weight: 500;
-      color: #6b7280;
-      line-height: 1.3;
-    }
-
-    .chart-card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 1.25rem 1.5rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    }
-
-    .chart-card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .chart-card-title::before {
-      content: '';
-      display: inline-block;
-      width: 4px;
-      height: 16px;
-      background: #1d4ed8;
-      border-radius: 2px;
-    }
-
-    .chart-wrapper {
-      position: relative;
-      width: 100%;
-      height: 230px;
-    }
-
-    .announce-card {
-      background: #fff;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    }
-
-    .announce-card-header {
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid #f3f4f6;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .announce-card-header h4 {
-      font-size: 14px;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
-    }
-
-    .compose-area {
-      padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid #f3f4f6;
-      background: #f9fafb;
-    }
-
-    .compose-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #6b7280;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .announce-textarea {
-      width: 100%;
-      border: 1px solid #e5e7eb;
-      border-radius: 9px;
-      padding: 10px 13px;
-      font-size: 13px;
-      font-family: 'Poppins', sans-serif;
-      color: #111827;
-      background: #fff;
-      resize: none;
-      height: 80px;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .announce-textarea:focus {
-      border-color: #1d4ed8;
-      box-shadow: 0 0 0 3px rgba(29,78,216,0.1);
-    }
-
-    .compose-footer {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
-    }
-
-    .btn-post {
-      padding: 8px 20px;
-      background: #1d4ed8;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      transition: background 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-post:hover {
-      background: #1e40af;
-    }
-
-    .announce-feed {
-      padding: 0 1.5rem;
-      max-height: 340px;
-      overflow-y: auto;
-    }
-
-    .feed-item {
-      padding: 1rem 0;
-      border-bottom: 1px solid #f3f4f6;
-      animation: slideIn 0.2s ease;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-6px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .feed-item:last-child {
-      border-bottom: none;
-    }
-
-    .feed-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-
-    .feed-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #eff6ff;
-      color: #1d4ed8;
-      font-size: 11px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .feed-author {
-      font-size: 13px;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .feed-date {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-left: auto;
-    }
-
-    .feed-body {
-      font-size: 13px;
-      color: #4b5563;
-      line-height: 1.65;
-      padding-left: 42px;
-    }
-
-    .feed-body.empty-body {
-      font-style: italic;
-      color: #9ca3af;
-    }
-  </style>
+  
 </head>
 
-<body>
+<body class="admin-dashboard-page">
   <nav class="uc-nav">
     <a class="nav-brand" href="admin_dashboard.php">
       <img src="../assets/images/ccsmainlog_nobg.png" alt="UC CCS Logo" class="nav-logo">
@@ -362,7 +98,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Feedback Reports
       </a>
-      <a class="sidebar-link" href="#">
+      <a class="sidebar-link" href="Admin_Reservation.php">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Reservation
       </a>
@@ -588,12 +324,12 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
               style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 13px; font-size:13px;font-family:'Poppins',sans-serif;outline:none; color:#111827;background:#fff;"
             >
               <option value="">-- Select Lab --</option>
-              <option value="Lab 1">Lab 1</option>
-              <option value="Lab 2">Lab 2</option>
-              <option value="Lab 3">Lab 3</option>
-              <option value="Lab 4">Lab 4</option>
-              <option value="Lab 5">Lab 5</option>
-              <option value="Lab 6">Lab 6</option>
+              <option value="Lab 524">Lab 524</option>
+              <option value="Lab 524">Lab 526</option>
+              <option value="Lab 528">Lab 528</option>
+              <option value="Lab 530">Lab 530</option>
+              <option value="Lab 542">Lab 542</option>
+              <option value="Lab 544">Lab 544</option>
             </select>
           </div>
 

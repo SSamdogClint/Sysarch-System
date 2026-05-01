@@ -81,8 +81,8 @@ Sysarch-System/
 USE sitin;
 
 -- Students table
-CREATE TABLE IF NOT EXISTS students (
-  id              INT          AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE students (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
   studentid       VARCHAR(20)  NOT NULL UNIQUE,
   lastname        VARCHAR(50)  NOT NULL,
   firstname       VARCHAR(50)  NOT NULL,
@@ -92,37 +92,64 @@ CREATE TABLE IF NOT EXISTS students (
   email           VARCHAR(100) NOT NULL UNIQUE,
   password        VARCHAR(255) NOT NULL,
   addrs           VARCHAR(150) DEFAULT '',
-  created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   session_credits INT          NOT NULL DEFAULT 30
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- accouncements table
+CREATE TABLE announcements (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  title      VARCHAR(255) NOT NULL,
+  message    TEXT NOT NULL,
+  posted_by  VARCHAR(100) DEFAULT 'Administrator',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Sit-in records table
-CREATE TABLE IF NOT EXISTS sitin_records (
-  id               INT          AUTO_INCREMENT PRIMARY KEY,
-  student_id       INT          NOT NULL,
-  studentid        VARCHAR(20)  NOT NULL,
+CREATE TABLE sitin_records (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  student_id       INT NOT NULL,
+  studentid        VARCHAR(20) NOT NULL,
   fullname         VARCHAR(150) NOT NULL,
   purpose          VARCHAR(100) NOT NULL,
-  lab              VARCHAR(50)  NOT NULL,
-  session_at_sitin INT          NOT NULL DEFAULT 0,
-  login_time       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-  status           VARCHAR(20)  DEFAULT 'active',
-  FOREIGN KEY (student_id) REFERENCES students(id)
-);
+  lab              VARCHAR(50) NOT NULL,
+  login_time       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status           VARCHAR(20) DEFAULT 'active',
+  session_at_sitin INT NOT NULL DEFAULT 0,
 
--- incase you created the table before i have changes in sitin records table
-ALTER TABLE sitin_records ADD COLUMN session_at_sitin INT NOT NULL DEFAULT 0;
+  INDEX idx_student_id (student_id),
+
+  CONSTRAINT fk_sitin_student
+    FOREIGN KEY (student_id)
+    REFERENCES students(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- create feedback table
 CREATE TABLE feedback (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    sitin_id INT NOT NULL,
-    student_id INT NOT NULL,
-    issue_type VARCHAR(100) NOT NULL,
-    feedback_text TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sitin_id) REFERENCES sitin_records(id) ON DELETE CASCADE
-);
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  sitin_id      INT NOT NULL,
+  student_id    INT NOT NULL,
+  issue_type    VARCHAR(100) DEFAULT NULL,
+  feedback_text TEXT NOT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY unique_sitin_feedback (sitin_id),
+  INDEX idx_feedback_student (student_id),
+
+  CONSTRAINT fk_feedback_sitin
+    FOREIGN KEY (sitin_id)
+    REFERENCES sitin_records(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+
+  CONSTRAINT fk_feedback_student
+    FOREIGN KEY (student_id)
+    REFERENCES students(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 
 ---

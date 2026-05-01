@@ -63,8 +63,9 @@ if ($announcement_feed_result) {
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/student.css">
 </head>
-<body class="student-dashboard-body">
+<body class="student-dashboard-body student-dashboard-page">
 
   <nav class="uc-nav">
     <a class="nav-brand" href="student_dashboard.php">

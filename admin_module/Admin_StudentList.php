@@ -35,228 +35,10 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/css/style.css">
-  <style>
-    body { background: #eef0f5; font-family: 'Poppins', sans-serif; }
-
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .sidebar.open { display: block; width: 100%; position: fixed; top: 60px; left: 0; bottom: 0; z-index: 99; overflow-y: auto; }
-    }
-
-    .page-card {
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      overflow: hidden;
-    }
-
-    .page-card-header {
-      background: #1d3a6e;
-      color: #fff;
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .page-card-header h4 {
-      font-size: 14px;
-      font-weight: 700;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .page-card-header span {
-      font-size: 12px;
-      color: #93c5fd;
-    }
-
-    /* Table */
-    .student-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .student-table thead tr {
-      background: #f8fafc;
-      border-bottom: 2px solid #e5e7eb;
-    }
-
-    .student-table thead th {
-      padding: 11px 16px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #6b7280;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    .student-table tbody tr {
-      border-bottom: 1px solid #f3f4f6;
-      transition: background 0.1s;
-    }
-
-    .student-table tbody tr:last-child { border-bottom: none; }
-    .student-table tbody tr:hover { background: #f9fafb; }
-
-    .student-table tbody td {
-      padding: 11px 16px;
-      color: #374151;
-      vertical-align: middle;
-    }
-
-    .badge-credits {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 99px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .badge-credits.high  { background: #dcfce7; color: #166534; }
-    .badge-credits.mid   { background: #fef9c3; color: #854d0e; }
-    .badge-credits.low   { background: #fee2e2; color: #991b1b; }
-
-    .btn-edit {
-      padding: 5px 12px;
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      transition: all 0.13s;
-    }
-
-    .btn-edit:hover { background: #dbeafe; }
-
-    .btn-delete {
-      padding: 5px 12px;
-      background: #fef2f2;
-      color: #dc2626;
-      border: 1px solid #fca5a5;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      transition: all 0.13s;
-    }
-
-    .btn-delete:hover { background: #fee2e2; }
-
-    /* Bottom action bar */
-    .action-bar {
-      padding: 14px 20px;
-      background: #f8fafc;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .btn-add {
-      padding: 9px 20px;
-      background: #1d3a6e;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.13s;
-    }
-
-    .btn-add:hover { background: #162d56; }
-
-    .btn-reset {
-      padding: 9px 20px;
-      background: #fff;
-      color: #d97706;
-      border: 1px solid #fcd34d;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.13s;
-    }
-
-    .btn-reset:hover { background: #fffbeb; }
-
-    /* Search bar */
-    .search-bar {
-      padding: 14px 20px;
-      border-bottom: 1px solid #f3f4f6;
-      background: #fff;
-    }
-
-    .search-input {
-      width: 100%;
-      max-width: 320px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 13px;
-      font-family: 'Poppins', sans-serif;
-      outline: none;
-      color: #111827;
-    }
-
-    .search-input:focus { border-color: #1d4ed8; box-shadow: 0 0 0 3px rgba(29,78,216,0.08); }
-
-    .empty-row td {
-      text-align: center;
-      padding: 2.5rem;
-      color: #9ca3af;
-      font-size: 13px;
-    }
-
-    /* Confirm delete modal */
-    .confirm-modal-box {
-      background: #fff;
-      border-radius: 14px;
-      width: 100%;
-      max-width: 400px;
-      margin: 1rem;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      font-family: 'Poppins', sans-serif;
-      overflow: hidden;
-    }
-
-    /* Toast */
-    #toast {
-      display: none;
-      position: fixed;
-      bottom: 24px; right: 24px;
-      z-index: 9999;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      color: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/css/admin.css">
+  
 </head>
-<body>
+<body class="admin-student-list-page">
 
   <!-- NAVBAR -->
   <nav class="uc-nav">
@@ -312,7 +94,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Feedback Reports
       </a>
-      <a class="sidebar-link" href="#">
+      <a class="sidebar-link" href="Admin_Reservation.php">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Reservation
       </a>
@@ -659,12 +441,12 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
               font-size:13px;font-family:'Poppins',sans-serif;outline:none;
               color:#111827;background:#fff;">
               <option value="">-- Select Lab --</option>
-              <option value="Lab 1">Lab 1</option>
-              <option value="Lab 2">Lab 2</option>
-              <option value="Lab 3">Lab 3</option>
-              <option value="Lab 4">Lab 4</option>
-              <option value="Lab 5">Lab 5</option>
-              <option value="Lab 6">Lab 6</option>
+              <option value="Lab 524">Lab 524</option>
+              <option value="Lab 524">Lab 526</option>
+              <option value="Lab 528">Lab 528</option>
+              <option value="Lab 530">Lab 530</option>
+              <option value="Lab 542">Lab 542</option>
+              <option value="Lab 544">Lab 544</option>
             </select>
           </div>
 
