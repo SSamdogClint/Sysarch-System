@@ -117,84 +117,6 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
   <style>
-    body.admin-reservation-page { background:#f4f6fb; font-family:'Poppins',sans-serif; color:#172554; }
-    body.admin-reservation-page .admin-main { flex:1; padding:18px 22px; }
-    .reservation-shell { display:grid; gap:14px; }
-    .reservation-management, .history-card { background:#fff; border:1px solid #e6ebf3; border-radius:14px; box-shadow:0 3px 12px rgba(15,23,42,.06); overflow:hidden; }
-    .rm-header { min-height:54px; padding:0 22px; background:linear-gradient(90deg,#092d75,#0b3c9a); color:#fff; display:flex; align-items:center; justify-content:space-between; gap:16px; }
-    .rm-title { display:flex; align-items:center; gap:12px; font-size:19px; font-weight:800; letter-spacing:-.2px; }
-    .rm-title .bi { font-size:24px; }
-    .summary-mini { display:flex; align-items:center; gap:10px; font-size:12px; color:#cfe0ff; flex-wrap:wrap; }
-    .mini-pill { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); color:#fff; padding:5px 10px; border-radius:999px; font-weight:700; }
-    .rm-controls { padding:18px 22px 12px; display:grid; grid-template-columns:170px 190px 150px 150px 150px 1fr; gap:14px; align-items:end; }
-    .filter-field label { display:block; color:#40557c; font-size:12px; font-weight:700; margin-bottom:7px; }
-    .filter-control { width:100%; height:38px; border:1px solid #dce4f0; background:#fff; border-radius:8px; padding:0 12px; color:#1f3155; font-size:13px; font-family:'Poppins',sans-serif; outline:none; box-shadow:0 1px 2px rgba(15,23,42,.03); }
-    .filter-control:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
-    .search-field { position:relative; }
-    .search-field .bi { position:absolute; left:13px; bottom:11px; color:#64748b; font-size:14px; }
-    .search-field input { padding-left:38px; }
-    .legend-row { padding:0 22px 14px; display:flex; justify-content:flex-end; gap:24px; font-size:12px; font-weight:700; color:#40557c; flex-wrap:wrap; }
-    .legend-item { display:inline-flex; align-items:center; gap:7px; }
-    .dot { width:11px; height:11px; border-radius:50%; display:inline-block; }
-    .dot.available { background:#22c55e; } .dot.pending { background:#facc15; } .dot.reserved { background:#ef4444; } .dot.unavailable { background:#94a3b8; }
-    .workspace { padding:0 20px 16px; display:grid; grid-template-columns:minmax(650px,2fr) minmax(320px,.95fr); gap:18px; align-items:stretch; }
-    .layout-card, .details-card { background:#fff; border:1px solid #dfe7f2; border-radius:12px; box-shadow:0 2px 8px rgba(15,23,42,.04); }
-    .layout-card { padding:13px 18px 16px; min-height:388px; }
-    .layout-card-title { display:flex; align-items:center; gap:12px; color:#0f2f72; font-size:16px; font-weight:800; margin-bottom:10px; }
-    .layout-card-title .bi { font-size:21px; color:#24436f; }
-    .layout-card-title small { font-size:12px; color:#7588a8; font-weight:700; margin-left:8px; }
-    .lab-frame { position:relative; border:4px solid #092d75; min-height:326px; border-radius:4px; background:#fff; padding:13px 58px 13px 20px; }
-    .door-arc { position:absolute; right:-46px; width:48px; height:42px; border:2px solid #94a3b8; border-left:0; border-radius:0 40px 40px 0; background:#fff; }
-    .door-arc.top { top:28px; } .door-arc.bottom { bottom:38px; }
-    .pc-grid { display:grid; grid-template-columns:repeat(8,minmax(70px,1fr)); gap:10px 22px; align-items:center; }
-    .pc-seat { height:34px; border-radius:5px; border:1px solid #bbf7d0; background:#dcfce7; color:#14532d; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Poppins',sans-serif; cursor:pointer; transition:transform .12s,box-shadow .12s,outline .12s; position:relative; padding-top:2px; }
-    .pc-seat:hover { transform:translateY(-1px); box-shadow:0 3px 8px rgba(15,23,42,.12); }
-    .pc-seat strong { font-size:11px; font-weight:800; line-height:1; }
-    .pc-seat .monitor { font-size:11px; line-height:1; margin-top:3px; color:#475569; }
-    .pc-seat.pending { background:#fef3c7; color:#78350f; border-color:#facc15; }
-    .pc-seat.reserved { background:#fee2e2; color:#991b1b; border-color:#f87171; }
-    .pc-seat.unavailable { background:#e5e7eb; color:#475569; border-color:#cbd5e1; }
-    .pc-seat.selected { outline:3px solid #3b82f6; box-shadow:0 0 0 4px rgba(59,130,246,.18); }
-    .details-card { padding:18px; min-height:388px; }
-    .details-title { display:flex; align-items:center; gap:12px; color:#0f2f72; font-size:17px; font-weight:800; padding-bottom:12px; border-bottom:1px solid #e4ebf5; margin-bottom:4px; }
-    .details-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; border-bottom:1px solid #e4ebf5; padding:10px 2px; font-size:13px; color:#435577; font-weight:700; }
-    .details-value { color:#203a68; font-weight:800; text-align:left; }
-    .badge-status { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:800; text-transform:capitalize; }
-    .badge-status.available { background:#dcfce7; color:#166534; } .badge-status.pending { background:#fef3c7; color:#a16207; } .badge-status.approved { background:#dcfce7; color:#166534; } .badge-status.reserved { background:#fee2e2; color:#991b1b; } .badge-status.rejected { background:#fee2e2; color:#991b1b; } .badge-status.unavailable { background:#e5e7eb; color:#475569; } .badge-status.done, .badge-status.cancelled { background:#e5e7eb; color:#475569; }
-    .detail-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px; }
-    .detail-actions .wide { grid-column:1/-1; }
-    .btn-panel-action { height:40px; border:0; border-radius:7px; color:#fff; font-family:'Poppins',sans-serif; font-weight:800; font-size:14px; display:inline-flex; align-items:center; justify-content:center; gap:9px; cursor:pointer; transition:transform .12s,opacity .12s; }
-    .btn-panel-action:hover { transform:translateY(-1px); } .btn-panel-action:disabled { opacity:.45; cursor:not-allowed; transform:none; }
-    .btn-approve { background:linear-gradient(180deg,#2bbf5a,#16a34a); } .btn-reject { background:linear-gradient(180deg,#ff3b3b,#dc2626); } .btn-neutral { background:#fff; color:#111827; border:1px solid #cfd8e3; } .btn-done { background:linear-gradient(180deg,#2563eb,#1d4ed8); }
-    .history-card { margin-top:10px; }
-    .history-top { min-height:48px; padding:0 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e4ebf5; gap:14px; flex-wrap:wrap; }
-    .history-title-tabs { display:flex; align-items:center; gap:24px; color:#14346d; font-size:15px; font-weight:800; }
-    .section-name { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
-    .history-tab { height:48px; display:inline-flex; align-items:center; gap:8px; color:#52688e; border:0; border-bottom:3px solid transparent; background:transparent; font-size:13px; font-weight:800; font-family:'Poppins',sans-serif; cursor:pointer; }
-    .history-tab.active { color:#0b3c9a; border-bottom-color:#0b3c9a; }
-    .entry-control { display:flex; align-items:center; gap:10px; font-size:12px; color:#52688e; font-weight:700; }
-    .entry-control select { width:64px; height:34px; border:1px solid #dce4f0; border-radius:8px; padding:0 8px; color:#1f3155; font-family:'Poppins',sans-serif; }
-    .table-wrap { overflow-x:auto; }
-    .reservation-table { width:100%; border-collapse:collapse; font-size:12px; }
-    .reservation-table th, .reservation-table td { padding:11px 20px; border-bottom:1px solid #e9eef7; vertical-align:middle; white-space:nowrap; }
-    .reservation-table th { background:#f8fafc; color:#637694; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
-    .reservation-table td { color:#263d65; font-weight:600; }
-    .reservation-table tr:hover td { background:#f8fbff; }
-    .row-actions { display:flex; align-items:center; gap:8px; }
-    .icon-btn { width:31px; height:26px; border-radius:7px; border:1px solid #dbeafe; background:#eff6ff; color:#2563eb; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; }
-    .icon-btn.success { border-color:#bbf7d0; background:#dcfce7; color:#166534; }
-    .icon-btn.reject { border-color:#fecaca; background:#fee2e2; color:#dc2626; }
-    .icon-btn.done { border-color:#bfdbfe; background:#dbeafe; color:#1d4ed8; }
-    .icon-btn.delete { border-color:#fecaca; background:#fff1f2; color:#ef4444; }
-    .history-bottom { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; color:#64748b; font-size:12px; font-weight:600; }
-    .pager { display:flex; gap:8px; align-items:center; }
-    .pager button { height:30px; border-radius:8px; border:1px solid #e4ebf5; background:#fff; color:#8a99b1; padding:0 12px; font-family:'Poppins',sans-serif; font-size:12px; font-weight:700; }
-    .pager .active-page { background:#0b3c9a; color:#fff; border-color:#0b3c9a; min-width:32px; }
-    .toast-msg { display:none; position:fixed; right:18px; bottom:18px; background:#111827; color:#fff; padding:12px 15px; border-radius:10px; font-size:13px; z-index:9999; }
-    .status-pill { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:7px; font-size:11px; font-weight:800; text-transform:capitalize; }
-    .status-pill.pending { background:#fef3c7; color:#a16207; } .status-pill.approved { background:#dcfce7; color:#166534; } .status-pill.rejected { background:#fee2e2; color:#dc2626; } .status-pill.done, .status-pill.cancelled { background:#e5e7eb; color:#475569; }
-    @media (max-width:1200px) { .rm-controls { grid-template-columns:repeat(3,1fr); } .workspace { grid-template-columns:1fr; } }
-    @media (max-width:768px) { body.admin-reservation-page .sidebar { display:none; } body.admin-reservation-page .sidebar.open { display:block; width:100%; position:fixed; top:60px; left:0; bottom:0; z-index:99; overflow-y:auto; } body.admin-reservation-page .admin-main { padding:12px; } .rm-controls { grid-template-columns:1fr; } .pc-grid { grid-template-columns:repeat(4,1fr); } .lab-frame { padding-right:25px; } .door-arc { display:none; } .history-title-tabs { gap:10px; flex-wrap:wrap; } }
   </style>
 </head>
 <body class="admin-reservation-page">
@@ -206,27 +128,60 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
         <div class="nav-sub">Admin Panel</div>
       </div>
     </a>
-    <button class="nav-toggler" id="navToggler" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+
+    <button class="nav-toggler" id="navToggler" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
     <div class="nav-links" id="navLinks">
-      <span style="font-size:13px;color:#6b7280;padding:0 8px;"><?= $admin_name ?></span>
+      <span style="font-size:13px; color:#6b7280; padding: 0 8px;">
+        <?= $admin_name ?>
+      </span>
       <div class="nav-divider"></div>
-      <a class="nav-link" href="../controllers/auth/logout.php?type=admin">Log out</a>
+      <a class="nav-link" href="../controllers/auth/logout.php">Log out</a>
     </div>
   </nav>
 
   <div class="admin-layout">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-section" style="margin-top:0;">Main</div>
-      <a class="sidebar-link" href="admin_dashboard.php"><i class="bi bi-grid"></i> Dashboard</a>
-      <a class="sidebar-link" href="#"><i class="bi bi-search"></i> Search</a>
-      <a class="sidebar-link" href="Admin_StudentList.php"><i class="bi bi-person"></i> Students</a>
-      <a class="sidebar-link" href="#"><i class="bi bi-calendar2-week"></i> Sit-in</a>
-      <a class="sidebar-link" href="Admin_SitinRecords.php"><i class="bi bi-file-earmark-text"></i> Sit-in Records</a>
+
+      <a class="sidebar-link" href="admin_dashboard.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a class="sidebar-link" href="#" onclick="openSearchModal(); return false;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search
+      </a>
+      <a class="sidebar-link" href="Admin_StudentList.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Students
+      </a>
+      <a class="sidebar-link" href="#" onclick="openSitinModal(); return false;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2"/></svg>
+        Sit-in
+      </a>
+      <a class="sidebar-link" href="Admin_SitinRecords.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Sit-in Records
+      </a>
+      <a class="sidebar-link active" href="Admin_Reservation.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Reservation
+      </a>
       <hr class="sidebar-divider">
       <div class="sidebar-section">Reports</div>
-      <a class="sidebar-link" href="#"><i class="bi bi-bar-chart"></i> Sit-in Reports</a>
-      <a class="sidebar-link" href="#"><i class="bi bi-chat-square"></i> Feedback Reports</a>
-      <a class="sidebar-link active" href="Admin_Reservation.php"><i class="bi bi-calendar2-check"></i> Reservation</a>
+      <a class="sidebar-link" href="#">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Sit-in Reports
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Feedback Reports
+      </a>
     </aside>
 
     <main class="admin-main">
@@ -378,6 +333,171 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
     </main>
   </div>
 
+
+
+  <!-- SEARCH STUDENT MODAL -->
+  <div id="searchModal" style="display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; width:100%; max-width:520px; margin:1rem; box-shadow:0 20px 60px rgba(0,0,0,0.2); font-family:'Poppins',sans-serif; overflow:hidden;">
+      <div style="background:#1d3a6e; color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:14px; font-weight:600;">Search Student</span>
+        <button type="button" onclick="closeSearchModal()" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      </div>
+
+      <div style="padding:20px 24px; border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex; gap:10px;">
+          <input
+            type="text"
+            id="adminSearchInput"
+            placeholder="Enter Student ID (e.g. 2024-00001)"
+            style="flex:1; border:1px solid #e5e7eb; border-radius:8px; padding:10px 14px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;"
+            onkeydown="if(event.key==='Enter') searchStudentFromModal()"
+          >
+
+          <button type="button" onclick="searchStudentFromModal()" style="padding:10px 20px; background:#1d3a6e; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; white-space:nowrap;">
+            Search
+          </button>
+        </div>
+
+        <div id="adminSearchError" style="display:none; margin-top:8px; font-size:12px; color:#b91c1c;"></div>
+      </div>
+
+      <div id="adminSearchResult" style="display:none; padding:20px 24px;">
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #f3f4f6;">
+          <div id="adminResultAvatar" style="width:56px; height:56px; border-radius:50%; background:#1d3a6e; color:#fff; font-size:20px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:3px solid #e5e7eb;"></div>
+
+          <div>
+            <div id="adminResultName" style="font-size:15px; font-weight:700; color:#111827;"></div>
+            <div id="adminResultId" style="font-size:12px; color:#6b7280; margin-top:2px;"></div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="background:#f9fafb; border-radius:8px; padding:10px 14px;">
+            <div style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:3px;">COURSE</div>
+            <div id="adminResultCourse" style="font-size:13px; font-weight:600; color:#111827;"></div>
+          </div>
+
+          <div style="background:#f9fafb; border-radius:8px; padding:10px 14px;">
+            <div style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:3px;">YEAR LEVEL</div>
+            <div id="adminResultYear" style="font-size:13px; font-weight:600; color:#111827;"></div>
+          </div>
+
+          <div style="background:#f9fafb; border-radius:8px; padding:10px 14px;">
+            <div style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:3px;">EMAIL</div>
+            <div id="adminResultEmail" style="font-size:13px; font-weight:600; color:#111827; word-break:break-all;"></div>
+          </div>
+
+          <div style="background:#f9fafb; border-radius:8px; padding:10px 14px;">
+            <div style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:3px;">ADDRESS</div>
+            <div id="adminResultAddr" style="font-size:13px; font-weight:600; color:#111827;"></div>
+          </div>
+
+          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; grid-column: span 2;">
+            <div style="font-size:11px; font-weight:600; color:#1d4ed8; margin-bottom:3px;">SESSION CREDITS REMAINING</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div id="adminResultCredits" style="font-size:22px; font-weight:800; color:#1d3a6e;"></div>
+              <div style="font-size:12px; color:#6b7280;">/ 30 credits this semester</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminSearchLoading" style="display:none; padding:32px; text-align:center; font-size:13px; color:#6b7280;">
+        Searching...
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER SIT-IN MODAL -->
+  <div id="sitinModal" style="display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; width:100%; max-width:520px; margin:1rem; box-shadow:0 20px 60px rgba(0,0,0,0.2); font-family:'Poppins',sans-serif; overflow:hidden;">
+      <div style="background:#1d3a6e; color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:14px; font-weight:600;">Register Sit-in</span>
+        <button type="button" onclick="closeSitinModal()" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      </div>
+
+      <div style="padding:24px;">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Student ID</label>
+
+          <div style="display:flex;gap:8px;">
+            <input
+              type="text"
+              id="sitinIdInput"
+              placeholder="e.g. 2024-00001"
+              style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:9px 13px; font-size:13px;font-family:'Poppins',sans-serif;outline:none;color:#111827;"
+              oninput="resetSitinLookup()"
+              onkeydown="if(event.key==='Enter') lookupStudent()"
+            >
+
+            <button type="button" onclick="lookupStudent()" style="padding:9px 16px;background:#1d3a6e;color:#fff;border:none; border-radius:8px;font-size:13px;font-weight:600; font-family:'Poppins',sans-serif;cursor:pointer;white-space:nowrap;">
+              Look up
+            </button>
+          </div>
+
+          <div id="sitinLookupError" style="display:none;margin-top:6px;font-size:12px;color:#b91c1c;"></div>
+        </div>
+
+        <div id="sitinStudentInfo" style="display:none; background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:12px 16px; margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="sitinAvatar" style="width:44px;height:44px;border-radius:50%; background:#1d3a6e;color:#fff;font-size:15px;font-weight:700; display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+
+            <div>
+              <div id="sitinStudentName" style="font-size:13px;font-weight:700;color:#111827;"></div>
+              <div id="sitinStudentCourse" style="font-size:12px;color:#6b7280;margin-top:1px;"></div>
+
+              <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+                <span style="font-size:11px;font-weight:600;color:#374151;">Remaining Sessions:</span>
+                <span id="sitinSessionBadge" style="background:#1d3a6e;color:#fff;font-size:11px;font-weight:700; padding:2px 10px;border-radius:99px;"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="sitinFormFields" style="display:none;">
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Purpose</label>
+            <input
+              type="text"
+              id="sitinPurpose"
+              placeholder="e.g. C++ Programming, Web Development"
+              style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 13px; font-size:13px;font-family:'Poppins',sans-serif;outline:none;color:#111827;"
+            >
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Lab Number</label>
+            <select
+              id="sitinLab"
+              style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 13px; font-size:13px;font-family:'Poppins',sans-serif;outline:none; color:#111827;background:#fff;"
+            >
+              <option value="">-- Select Lab --</option>
+              <option value="Lab 524">Lab 524</option>
+              <option value="Lab 526">Lab 526</option>
+              <option value="Lab 528">Lab 528</option>
+              <option value="Lab 530">Lab 530</option>
+              <option value="Lab 542">Lab 542</option>
+              <option value="Lab 544">Lab 544</option>
+            </select>
+          </div>
+
+          <div id="sitinSubmitError" style="display:none;margin-bottom:10px;font-size:12px;color:#b91c1c;"></div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" onclick="closeSitinModal()" style="padding:9px 20px;border:1px solid #d1d5db;border-radius:8px; background:#fff;font-size:13px;font-weight:500; font-family:'Poppins',sans-serif;cursor:pointer;color:#374151;">
+              Cancel
+            </button>
+
+            <button type="button" onclick="submitSitin()" style="padding:9px 24px;background:#059669;color:#fff;border:none; border-radius:8px;font-size:13px;font-weight:600; font-family:'Poppins',sans-serif;cursor:pointer;">
+              Confirm Sit-in
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <div class="toast-msg" id="toastMsg"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -401,6 +521,213 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       toast.style.display = 'block';
       setTimeout(() => toast.style.display = 'none', 2500);
     }
+
+
+
+    // Admin sidebar modals: Search Student + Register Sit-in
+    let currentStudent = null;
+
+    function openSearchModal() {
+      const modal = document.getElementById('searchModal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      resetSearchModal();
+      setTimeout(() => document.getElementById('adminSearchInput')?.focus(), 100);
+    }
+
+    function closeSearchModal() {
+      const modal = document.getElementById('searchModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      resetSearchModal();
+    }
+
+    function resetSearchModal() {
+      const input = document.getElementById('adminSearchInput');
+      if (input) input.value = '';
+      document.getElementById('adminSearchResult').style.display = 'none';
+      document.getElementById('adminSearchError').style.display = 'none';
+      document.getElementById('adminSearchLoading').style.display = 'none';
+    }
+
+    function showAdminSearchError(message) {
+      const error = document.getElementById('adminSearchError');
+      error.textContent = message;
+      error.style.display = 'block';
+    }
+
+    function searchStudentFromModal() {
+      const id = document.getElementById('adminSearchInput').value.trim();
+
+      if (!id) {
+        showAdminSearchError('Please enter a Student ID.');
+        return;
+      }
+
+      document.getElementById('adminSearchResult').style.display = 'none';
+      document.getElementById('adminSearchError').style.display = 'none';
+      document.getElementById('adminSearchLoading').style.display = 'block';
+
+      fetch(`../controllers/student/search_student.php?studentid=${encodeURIComponent(id)}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('adminSearchLoading').style.display = 'none';
+
+          if (!data.found) {
+            showAdminSearchError(data.message || 'No student found with that ID.');
+            return;
+          }
+
+          const s = data.student;
+          const initials = ((s.firstname || '').charAt(0) + (s.lastname || '').charAt(0)).toUpperCase();
+          const yearLabels = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year' };
+
+          document.getElementById('adminResultAvatar').textContent = initials || 'ST';
+          document.getElementById('adminResultName').textContent = `${s.lastname || ''}, ${s.firstname || ''} ${s.middlename || ''}`.trim();
+          document.getElementById('adminResultId').textContent = 'ID: ' + (s.studentid || '—');
+          document.getElementById('adminResultCourse').textContent = s.course || '—';
+          document.getElementById('adminResultYear').textContent = yearLabels[s.yearlvl] || s.yearlvl || '—';
+          document.getElementById('adminResultEmail').textContent = s.email || '—';
+          document.getElementById('adminResultAddr').textContent = s.addrs || '—';
+          document.getElementById('adminResultCredits').textContent = s.session_credits ?? '0';
+
+          document.getElementById('adminSearchResult').style.display = 'block';
+        })
+        .catch(() => {
+          document.getElementById('adminSearchLoading').style.display = 'none';
+          showAdminSearchError('Something went wrong. Please try again.');
+        });
+    }
+
+    function openSitinModal() {
+      const modal = document.getElementById('sitinModal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      resetSitinModal();
+      setTimeout(() => document.getElementById('sitinIdInput')?.focus(), 100);
+    }
+
+    function closeSitinModal() {
+      const modal = document.getElementById('sitinModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      resetSitinModal();
+    }
+
+    function resetSitinModal() {
+      currentStudent = null;
+      document.getElementById('sitinIdInput').value = '';
+      document.getElementById('sitinPurpose').value = '';
+      document.getElementById('sitinLab').value = '';
+      document.getElementById('sitinStudentInfo').style.display = 'none';
+      document.getElementById('sitinFormFields').style.display = 'none';
+      document.getElementById('sitinLookupError').style.display = 'none';
+      document.getElementById('sitinSubmitError').style.display = 'none';
+    }
+
+    function resetSitinLookup() {
+      currentStudent = null;
+      document.getElementById('sitinStudentInfo').style.display = 'none';
+      document.getElementById('sitinFormFields').style.display = 'none';
+      document.getElementById('sitinLookupError').style.display = 'none';
+      document.getElementById('sitinSubmitError').style.display = 'none';
+    }
+
+    function showSitinError(elementId, message) {
+      const error = document.getElementById(elementId);
+      error.textContent = message;
+      error.style.display = 'block';
+    }
+
+    function lookupStudent() {
+      const id = document.getElementById('sitinIdInput').value.trim();
+
+      if (!id) {
+        showSitinError('sitinLookupError', 'Please enter a Student ID.');
+        return;
+      }
+
+      document.getElementById('sitinLookupError').style.display = 'none';
+      document.getElementById('sitinSubmitError').style.display = 'none';
+
+      fetch(`../controllers/student/search_student.php?studentid=${encodeURIComponent(id)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.found) {
+            showSitinError('sitinLookupError', data.message || 'No student found with that ID.');
+            return;
+          }
+
+          const s = data.student;
+          currentStudent = s;
+
+          if (Number(s.session_credits) <= 0) {
+            showSitinError('sitinLookupError', 'This student has no remaining session credits.');
+            return;
+          }
+
+          const initials = ((s.firstname || '').charAt(0) + (s.lastname || '').charAt(0)).toUpperCase();
+          document.getElementById('sitinAvatar').textContent = initials || 'ST';
+          document.getElementById('sitinStudentName').textContent = `${s.lastname || ''}, ${s.firstname || ''} ${s.middlename || ''}`.trim();
+          document.getElementById('sitinStudentCourse').textContent = `${s.course || 'No course'} • Year ${s.yearlvl || '—'}`;
+          document.getElementById('sitinSessionBadge').textContent = s.session_credits;
+          document.getElementById('sitinStudentInfo').style.display = 'block';
+          document.getElementById('sitinFormFields').style.display = 'block';
+        })
+        .catch(() => showSitinError('sitinLookupError', 'Something went wrong. Please try again.'));
+    }
+
+    function submitSitin() {
+      if (!currentStudent) {
+        showSitinError('sitinSubmitError', 'Please look up a student first.');
+        return;
+      }
+
+      const purpose = document.getElementById('sitinPurpose').value.trim();
+      const lab = document.getElementById('sitinLab').value.trim();
+
+      if (!purpose || !lab) {
+        showSitinError('sitinSubmitError', 'Purpose and lab are required.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('studentid', currentStudent.studentid);
+      formData.append('purpose', purpose);
+      formData.append('lab', lab);
+
+      fetch('../controllers/sitin/register_sitin.php', {
+        method: 'POST',
+        body: formData
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) {
+            showSitinError('sitinSubmitError', data.message || 'Failed to register sit-in.');
+            return;
+          }
+
+          closeSitinModal();
+          showToast('Sit-in registered successfully.');
+          setTimeout(() => window.location.reload(), 900);
+        })
+        .catch(() => showSitinError('sitinSubmitError', 'Something went wrong. Please try again.'));
+    }
+
+    const searchModal = document.getElementById('searchModal');
+    if (searchModal) {
+      searchModal.addEventListener('click', function(e) {
+        if (e.target === this) closeSearchModal();
+      });
+    }
+
+    const sitinModal = document.getElementById('sitinModal');
+    if (sitinModal) {
+      sitinModal.addEventListener('click', function(e) {
+        if (e.target === this) closeSitinModal();
+      });
+    }
+
 
     function pcLabel(pc) {
       return 'PC ' + String(pc).padStart(2, '0');

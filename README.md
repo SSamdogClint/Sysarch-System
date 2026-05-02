@@ -150,6 +150,64 @@ CREATE TABLE feedback (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- UC Sit-in System Reservation Tables
+-- Run this inside your Sitin database.
+-- Updated version: includes reservation_end_time.
+
+CREATE TABLE IF NOT EXISTS lab_reservations (
+  id                    INT AUTO_INCREMENT PRIMARY KEY,
+  student_id            INT NOT NULL,
+  studentid             VARCHAR(20) NOT NULL,
+  fullname              VARCHAR(120) NOT NULL,
+  purpose               VARCHAR(150) NOT NULL,
+  lab                   VARCHAR(50) NOT NULL,
+  pc_number             INT NOT NULL,
+  reservation_date      DATE NOT NULL,
+  reservation_time      TIME NOT NULL,
+  reservation_end_time  TIME NOT NULL,
+  status                ENUM('pending','approved','rejected','cancelled','done') NOT NULL DEFAULT 'pending',
+  created_at            DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at            DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_lab_slot (lab, reservation_date, reservation_time, reservation_end_time, pc_number),
+  INDEX idx_student_slot (student_id, reservation_date, reservation_time, reservation_end_time),
+  INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Optional table for PCs that are unavailable/under maintenance.
+-- If you do not insert anything here, all PCs start as available.
+CREATE TABLE IF NOT EXISTS lab_pc_status (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  lab         VARCHAR(50) NOT NULL,
+  pc_number   INT NOT NULL,
+  status      ENUM('available','unavailable') NOT NULL DEFAULT 'available',
+  note        VARCHAR(150) DEFAULT NULL,
+  updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_lab_pc (lab, pc_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Sample unavailable PCs. You may delete/change these.
+-- INSERT INTO lab_pc_status (lab, pc_number, status, note) VALUES
+-- ('Lab 524', 3, 'unavailable', 'For repair'),
+-- ('Lab 524', 18, 'unavailable', 'No keyboard'),
+-- ('Lab 526', 11, 'unavailable', 'Maintenance')
+-- ON DUPLICATE KEY UPDATE status = VALUES(status), note = VALUES(note);
+
+-- Run this ONCE if you already imported the old reservation_tables.sql.
+-- It adds the end-time column needed for Current Requests vs Reservation History.
+
+ALTER TABLE lab_reservations
+  ADD COLUMN reservation_end_time TIME NULL AFTER reservation_time;
+
+UPDATE lab_reservations
+SET reservation_end_time = ADDTIME(reservation_time, '01:00:00')
+WHERE reservation_end_time IS NULL;
+
+ALTER TABLE lab_reservations
+  MODIFY reservation_end_time TIME NOT NULL;
+
 ```
 
 ---

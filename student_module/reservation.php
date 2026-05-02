@@ -56,56 +56,10 @@ $stmt->close();
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/student.css">
   <style>
-    body.student-reservation-page { background:#eef0f5; font-family:'Poppins',sans-serif; }
-    .reservation-grid { display:grid; grid-template-columns: 330px 1fr; gap:20px; padding:20px; }
-    .reservation-panel { background:#fff; border-radius:14px; box-shadow:0 1px 4px rgba(0,0,0,.06); overflow:hidden; }
-    .reservation-panel-header { background:#1d3a6e; color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .reservation-panel-header h4 { margin:0; font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; }
-    .reservation-body { padding:18px; }
-    .field { margin-bottom:13px; }
-    .field label { display:block; font-size:12px; font-weight:700; color:#374151; margin-bottom:6px; }
-    .field input, .field select, .field textarea { width:100%; border:1px solid #e5e7eb; border-radius:9px; padding:10px 12px; font-size:13px; outline:none; font-family:'Poppins',sans-serif; }
-    .field textarea { min-height:86px; resize:vertical; }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color:#1d4ed8; box-shadow:0 0 0 3px rgba(29,78,216,.08); }
-    .time-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .btn-reserve { width:100%; border:0; border-radius:10px; padding:11px 14px; background:#1d4ed8; color:#fff; font-weight:700; font-size:13px; font-family:'Poppins',sans-serif; cursor:pointer; }
-    .btn-reserve:hover { background:#1e40af; }
-    .btn-reserve:disabled { background:#9ca3af; cursor:not-allowed; }
-    .lab-wrap { position:relative; background:#f8fafc; border:1px solid #e5e7eb; border-radius:16px; padding:52px 58px 52px 22px; min-height:520px; }
-    .lab-title { position:absolute; top:14px; left:18px; font-size:13px; font-weight:800; color:#111827; }
-    .teacher-area { position:absolute; top:12px; right:58px; background:#111827; color:#fff; font-size:11px; font-weight:700; padding:8px 12px; border-radius:10px; }
-    .door { position:absolute; right:10px; width:38px; height:72px; border:2px solid #94a3b8; border-right:0; border-radius:12px 0 0 12px; background:#e0f2fe; color:#075985; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; writing-mode:vertical-rl; text-orientation:mixed; }
-    .door.top { top:82px; }
-    .door.bottom { bottom:34px; }
-    .pc-grid { display:grid; grid-template-columns:repeat(8, minmax(58px, 1fr)); gap:12px; }
-    .pc-seat { border:0; border-radius:14px; min-height:58px; padding:8px 6px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-family:'Poppins',sans-serif; cursor:pointer; transition:transform .12s, box-shadow .12s; }
-    .pc-seat strong { font-size:13px; }
-    .pc-seat span { font-size:10px; font-weight:700; }
-    .pc-seat.available { background:#dcfce7; color:#166534; border:1px solid #86efac; }
-    .pc-seat.reserved, .pc-seat.pending { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; cursor:not-allowed; }
-    .pc-seat.unavailable { background:#e5e7eb; color:#6b7280; border:1px solid #d1d5db; cursor:not-allowed; }
-    .pc-seat.selected { background:#dbeafe; color:#1d4ed8; border:2px solid #1d4ed8; box-shadow:0 6px 14px rgba(29,78,216,.18); transform:translateY(-1px); }
-    .legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; font-size:12px; color:#4b5563; }
-    .legend-item { display:flex; align-items:center; gap:6px; }
-    .legend-dot { width:13px; height:13px; border-radius:4px; display:inline-block; }
-    .legend-dot.green { background:#22c55e; } .legend-dot.red { background:#ef4444; } .legend-dot.gray { background:#9ca3af; } .legend-dot.blue { background:#3b82f6; }
-    .message-box { display:none; padding:10px 12px; border-radius:9px; font-size:12px; margin-bottom:12px; }
-    .message-box.success { background:#f0fdf4; border:1px solid #86efac; color:#166534; }
-    .message-box.error { background:#fef2f2; border:1px solid #fca5a5; color:#b91c1c; }
-    .history-table { width:100%; border-collapse:collapse; font-size:12px; }
-    .history-table th, .history-table td { padding:11px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
-    .history-table th { color:#6b7280; font-size:11px; text-transform:uppercase; background:#f9fafb; }
-    .status-pill { display:inline-block; padding:4px 9px; border-radius:999px; font-size:10px; font-weight:800; text-transform:uppercase; }
-    .status-pending { background:#fef3c7; color:#92400e; }
-    .status-approved { background:#dcfce7; color:#166534; }
-    .status-rejected { background:#fee2e2; color:#991b1b; }
-    .status-cancelled { background:#e5e7eb; color:#374151; }
-    .status-done { background:#dbeafe; color:#1d4ed8; }
-    @media (max-width: 1050px) { .reservation-grid { grid-template-columns:1fr; } .pc-grid { grid-template-columns:repeat(4, 1fr); } }
-    @media (max-width: 768px) { .sidebar { display:none; } .sidebar.open { display:block; width:100%; position:fixed; top:60px; left:0; bottom:0; z-index:99; overflow-y:auto; } .admin-main { padding:0; } .reservation-grid { padding:12px; } .lab-wrap { padding-right:50px; } .time-row { grid-template-columns:1fr; } }
+  
   </style>
 </head>
-<body class="student-reservation-page">
+<body class="student-reservation-page student-dashboard-page">
 
   <nav class="uc-nav">
     <a class="nav-brand" href="student_dashboard.php">
@@ -147,12 +101,69 @@ $stmt->close();
   <div class="admin-layout">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-section" style="margin-top:0;">Main</div>
-      <a class="sidebar-link" href="student_dashboard.php">Dashboard</a>
-      <a class="sidebar-link active" href="reservation.php">Reservation</a>
+
+      <a class="sidebar-link" href="student_dashboard.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <a class="sidebar-link" href="#" onclick="openModal(); return false;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        Edit Profile
+      </a>
+
+      <a class="sidebar-link active" href="reservation.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        Reservation
+      </a>
+
       <hr class="sidebar-divider">
       <div class="sidebar-section">Records</div>
-      <a class="sidebar-link" href="announcements.php">Announcements</a>
-      <a class="sidebar-link" href="sitin_history.php">Sit-in History</a>
+
+      <a class="sidebar-link" href="announcements.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+        Announcements
+      </a>
+
+      <a class="sidebar-link" href="session_table.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Session Table
+      </a>
+
+      <a class="sidebar-link" href="sitin_history.php">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        Sit-in History
+      </a>
+
+      <a class="sidebar-link" href="#">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Feedback
+      </a>
     </aside>
 
     <main class="admin-main" style="flex:1;">
@@ -218,7 +229,8 @@ $stmt->close();
             </div>
             <div class="legend">
               <div class="legend-item"><span class="legend-dot green"></span> Available</div>
-              <div class="legend-item"><span class="legend-dot red"></span> Reserved/Pending</div>
+              <div class="legend-item"><span class="legend-dot yellow"></span> Pending</div>
+              <div class="legend-item"><span class="legend-dot red"></span> Reserved</div>
               <div class="legend-item"><span class="legend-dot gray"></span> Unavailable</div>
               <div class="legend-item"><span class="legend-dot blue"></span> Selected</div>
             </div>
@@ -255,7 +267,96 @@ $stmt->close();
       </div>
     </main>
   </div>
+  <div id="editModal" style="
+    display:none; position:fixed; inset:0; z-index:9998;
+    background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
 
+    <div style="
+      background:#fff; border-radius:16px; width:100%; max-width:540px;
+      max-height:90vh; overflow-y:auto; margin:1rem;
+      box-shadow:0 20px 60px rgba(0,0,0,0.2);
+      font-family:'Poppins',sans-serif; overflow:hidden;">
+
+      <div style="
+        background:#1d3a6e; color:#fff; padding:16px 24px;
+        display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:14px; font-weight:600;">Edit Profile</span>
+        <button type="button" onclick="closeModal()" style="
+          background:transparent; border:none; color:#fff;
+          font-size:20px; cursor:pointer; line-height:1;">✕</button>
+      </div>
+
+      <div style="padding:24px;">
+        <form action="../controllers/student/update_profile.php" method="POST">
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
+            <input type="text" name="firstname" value="<?= $firstname ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Last Name</label>
+            <input type="text" name="lastname" value="<?= $lastname ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Course</label>
+            <input type="text" name="course" value="<?= $course ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Year Level</label>
+            <input type="text" name="yearlvl" value="<?= $yearlvl ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Email</label>
+            <input type="email" name="email" value="<?= $email ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Address</label>
+            <input type="text" name="addrs" value="<?= $addrs ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button type="button" onclick="closeModal()" style="
+              padding:9px 20px; border:1px solid #d1d5db; border-radius:8px;
+              background:#fff; font-size:13px; font-weight:500;
+              font-family:'Poppins',sans-serif; cursor:pointer; color:#374151;">
+              Cancel
+            </button>
+
+            <button type="submit" style="
+              padding:9px 24px; background:#1d3a6e; color:#fff;
+              border:none; border-radius:8px; font-size:13px; font-weight:600;
+              font-family:'Poppins',sans-serif; cursor:pointer;">
+              Save Changes
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   const pcGrid = document.getElementById('pcGrid');
@@ -266,10 +367,74 @@ $stmt->close();
     document.getElementById('sidebar').classList.toggle('open');
   });
 
-  const bell = document.getElementById('notifBellBtn');
-  if (bell) {
-    bell.addEventListener('click', () => document.getElementById('notifMenu').classList.toggle('open'));
+  const notifications = <?= json_encode($notifications, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+const notifBellBtn = document.getElementById('notifBellBtn');
+const notifMenu = document.getElementById('notifMenu');
+const notifDot = document.getElementById('notifDot');
+const notifDropdown = document.getElementById('notifDropdown');
+const notifStorageKey = 'student_notif_last_seen_<?= (int)$student_id ?>';
+
+function getLatestNotifTime() {
+  if (!notifications.length) return 0;
+  return Math.max(...notifications.map(n => new Date(n.created_at).getTime() || 0));
+}
+
+function updateNotifState() {
+  const lastSeen = parseInt(localStorage.getItem(notifStorageKey) || '0', 10);
+  const latest = getLatestNotifTime();
+
+  if (latest > lastSeen) {
+    notifDot.classList.add('show');
+    notifBellBtn.classList.add('has-new');
+  } else {
+    notifDot.classList.remove('show');
+    notifBellBtn.classList.remove('has-new');
   }
+}
+
+function openModal() {
+  const modal = document.getElementById('editModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeModal() {
+  const modal = document.getElementById('editModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+const editModal = document.getElementById('editModal');
+
+if (editModal) {
+  editModal.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
+}
+
+if (notifBellBtn) {
+  notifBellBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    notifMenu.classList.toggle('open');
+
+    if (notifMenu.classList.contains('open')) {
+      localStorage.setItem(notifStorageKey, String(getLatestNotifTime()));
+      updateNotifState();
+    }
+  });
+}
+
+document.addEventListener('click', function (e) {
+  if (notifDropdown && !notifDropdown.contains(e.target)) {
+    notifMenu.classList.remove('open');
+  }
+});
+
+updateNotifState();
 
   function addOneHour(timeValue) {
     if (!timeValue) return '';

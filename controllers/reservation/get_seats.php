@@ -12,7 +12,7 @@ if (empty($_SESSION['logged_in']) && empty($_SESSION['admin_logged_in'])) {
     exit;
 }
 
-$lab       = trim($_GET['lab'] ?? '');
+$lab       = trim($_GET['lab'] ?? '');  
 $date      = trim($_GET['date'] ?? '');
 $time      = trim($_GET['time'] ?? '');
 $end_time  = trim($_GET['end_time'] ?? '');
@@ -92,8 +92,13 @@ $res = $stmt->get_result();
 while ($row = $res->fetch_assoc()) {
     $pc = (int)$row['pc_number'];
     if (isset($seats[$pc])) {
-        $seats[$pc]['status'] = 'reserved';
-        $seats[$pc]['layout_status'] = $row['status'] === 'pending' ? 'pending' : 'reserved';
+        if ($row['status'] === 'pending') {
+            $seats[$pc]['status'] = 'pending';
+            $seats[$pc]['layout_status'] = 'pending';
+        } else {
+            $seats[$pc]['status'] = 'reserved';
+            $seats[$pc]['layout_status'] = 'reserved';
+        }
         $seats[$pc]['reservation_id'] = (int)$row['id'];
         $seats[$pc]['studentid'] = $row['studentid'];
         $seats[$pc]['fullname'] = $row['fullname'];
