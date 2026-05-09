@@ -149,202 +149,15 @@ foreach ($sessions as $s) {
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
   <style>
-    body.student-session-table-page { background:#eef0f5; font-family:'Poppins',sans-serif; }
-    body.student-session-table-page .admin-main { flex:1; padding:20px; }
-
-    .session-card {
-      background:#fff;
-      border-radius:14px;
-      box-shadow:0 1px 4px rgba(0,0,0,0.06);
-      border:1px solid #e5e7eb;
-      overflow:hidden;
-    }
-
-    .session-header {
-      background:#1d3a6e;
-      color:#fff;
-      padding:14px 20px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .session-header h4 {
-      margin:0;
-      font-size:15px;
-      font-weight:800;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-
-    .session-header span {
-      font-size:12px;
-      color:#bfdbfe;
-      font-weight:600;
-    }
-
-    .session-summary {
-      display:grid;
-      grid-template-columns:repeat(3, 1fr);
-      gap:12px;
-      padding:16px 20px;
-      border-bottom:1px solid #f3f4f6;
-      background:#fff;
-    }
-
-    .summary-box {
-      background:#f8fafc;
-      border:1px solid #e5e7eb;
-      border-radius:12px;
-      padding:14px 16px;
-    }
-
-    .summary-box strong {
-      display:block;
-      font-size:24px;
-      font-weight:800;
-      color:#1d3a6e;
-      line-height:1;
-      margin-bottom:5px;
-    }
-
-    .summary-box span {
-      font-size:12px;
-      color:#6b7280;
-      font-weight:600;
-    }
-
-    .session-toolbar {
-      padding:14px 20px;
-      border-bottom:1px solid #f3f4f6;
-      display:grid;
-      grid-template-columns:1.4fr 180px 180px;
-      gap:12px;
-      align-items:end;
-      background:#fff;
-    }
-
-    .filter-field label {
-      display:block;
-      font-size:11px;
-      font-weight:800;
-      color:#6b7280;
-      text-transform:uppercase;
-      letter-spacing:.4px;
-      margin-bottom:6px;
-    }
-
-    .filter-control {
-      width:100%;
-      height:38px;
-      border:1px solid #e5e7eb;
-      border-radius:9px;
-      padding:0 12px;
-      font-size:13px;
-      font-family:'Poppins',sans-serif;
-      color:#111827;
-      outline:none;
-      background:#fff;
-    }
-
-    .filter-control:focus {
-      border-color:#1d4ed8;
-      box-shadow:0 0 0 3px rgba(29,78,216,0.08);
-    }
-
-    .table-wrap { overflow-x:auto; }
-
-    .session-table {
-      width:100%;
-      border-collapse:collapse;
-      font-size:12px;
-    }
-
-    .session-table th,
-    .session-table td {
-      padding:12px 14px;
-      border-bottom:1px solid #f3f4f6;
-      vertical-align:middle;
-      white-space:nowrap;
-    }
-
-    .session-table th {
-      background:#f9fafb;
-      color:#6b7280;
-      font-size:11px;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.4px;
-    }
-
-    .session-table td {
-      color:#1f2937;
-      font-weight:600;
-    }
-
-    .session-table tr:hover td {
-      background:#f8fafc;
-    }
-
-    .status-pill {
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:5px 10px;
-      border-radius:999px;
-      font-size:10px;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.3px;
-    }
-
-    .status-active { background:#dcfce7; color:#166534; }
-    .status-done { background:#dbeafe; color:#1d4ed8; }
-    .status-unknown { background:#f3f4f6; color:#6b7280; }
-
-    .empty-row {
-      text-align:center;
-      color:#9ca3af !important;
-      padding:28px !important;
-      font-weight:500 !important;
-    }
-
-    .session-footer {
-      padding:12px 20px;
-      background:#f8fafc;
-      color:#64748b;
-      font-size:12px;
-      font-weight:600;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      border-top:1px solid #e5e7eb;
-    }
-
-    @media (max-width:768px) {
-      body.student-session-table-page .sidebar { display:none; }
-      body.student-session-table-page .sidebar.open {
-        display:block;
-        width:100%;
-        position:fixed;
-        top:60px;
-        left:0;
-        bottom:0;
-        z-index:99;
-        overflow-y:auto;
-      }
-
-      body.student-session-table-page .admin-main { padding:12px; }
-      .session-toolbar { grid-template-columns:1fr; }
-      .session-summary { grid-template-columns:1fr; }
-    }
+    
   </style>
 </head>
 <body class="student-session-table-page student-dashboard-page">
+  <script>
+    if (localStorage.getItem('uc_dark_mode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
 
   <nav class="uc-nav">
     <a class="nav-brand" href="student_dashboard.php">
@@ -388,6 +201,11 @@ foreach ($sessions as $s) {
           <?php endif; ?>
         </div>
       </div>
+
+      <button type="button" class="dark-toggle" id="darkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode" aria-pressed="false">
+        <i class="bi bi-moon-stars"></i>
+        <span>Dark</span>
+      </button>
 
       <span style="font-size:13px; color:#6b7280; padding:0 4px;">
         <?= $firstname . ' ' . $lastname ?>
@@ -658,6 +476,27 @@ foreach ($sessions as $s) {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
+    function applyDarkMode() {
+      const enabled = localStorage.getItem('uc_dark_mode') === 'enabled';
+      document.body.classList.toggle('dark-mode', enabled);
+
+      const btn = document.getElementById('darkModeToggle');
+      if (btn) {
+        btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        btn.innerHTML = enabled
+          ? '<i class="bi bi-sun"></i><span>Light</span>'
+          : '<i class="bi bi-moon-stars"></i><span>Dark</span>';
+      }
+    }
+
+    function toggleDarkMode() {
+      const enabled = !document.body.classList.contains('dark-mode');
+      localStorage.setItem('uc_dark_mode', enabled ? 'enabled' : 'disabled');
+      applyDarkMode();
+    }
+
+    applyDarkMode();
+
     document.getElementById('navToggler').addEventListener('click', () => {
       document.getElementById('navLinks').classList.toggle('open');
       document.getElementById('sidebar').classList.toggle('open');

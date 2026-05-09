@@ -580,15 +580,20 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
 
     function confirmDeactivate() {
       if (!deactivateTargetId) return;
-      const fd = new FormData();
-      fd.append('record_id', deactivateTargetId);
 
-      fetch('../controllers/sitin/deactivate_sitin.php', { method: 'POST', body: fd })
+      const fd = new FormData();
+      fd.append('sitin_id', deactivateTargetId);
+
+      fetch('../controllers/sitin/deactivate_sitin.php', { 
+        method: 'POST', 
+        body: fd 
+      })
         .then(res => res.json())
         .then(data => {
           closeDeactivateModal();
+
           if (data.success) {
-            showToast('Sit-in deactivated and moved to history.', '#d97706');
+            showToast('Sit-in deactivated. Time-out recorded.', '#d97706');
             setTimeout(() => location.reload(), 1200);
           } else {
             showToast(data.message || 'Failed to deactivate.', '#dc2626');

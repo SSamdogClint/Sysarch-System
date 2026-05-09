@@ -37,9 +37,13 @@ require_once '../controllers/announcements/student_notifications.php';
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/student.css">
-  
 </head>
 <body class="student-announcements-page">
+  <script>
+    if (localStorage.getItem('uc_dark_mode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
 
   <nav class="uc-nav">
     <a class="nav-brand" href="student_dashboard.php">
@@ -84,12 +88,17 @@ require_once '../controllers/announcements/student_notifications.php';
         </div>
       </div>
 
-      <span style="font-size:13px; color:#6b7280; padding:0 4px;">
+      <button type="button" class="dark-toggle" id="darkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode" aria-pressed="false">
+        <span class="dark-toggle-icon" id="darkModeIcon">🌙</span>
+        <span id="darkModeText">Dark</span>
+      </button>
+
+      <span class="student-nav-name">
         <?= $firstname . ' ' . $lastname ?>
       </span>
 
       <div class="nav-divider"></div>
-      <a class="nav-link"href="../controllers/auth/logout.php">Log out</a>
+      <a class="nav-link" href="../controllers/auth/logout.php">Log out</a>
     </div>
   </nav>
 
@@ -160,64 +169,53 @@ require_once '../controllers/announcements/student_notifications.php';
     </main>
   </div>
 
-  <div id="editModal" style="
-    display:none; position:fixed; inset:0; z-index:9998;
-    background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
-
-    <div style="
-      background:#fff; border-radius:16px; width:100%; max-width:540px;
-      max-height:90vh; overflow-y:auto; margin:1rem;
-      box-shadow:0 20px 60px rgba(0,0,0,0.2);
-      font-family:'Poppins',sans-serif; overflow:hidden;">
-
-      <div style="
-        background:#1d3a6e; color:#fff; padding:16px 24px;
-        display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:14px; font-weight:600;">Edit Profile</span>
-        <button type="button" onclick="closeModal()" style="
-          background:transparent; border:none; color:#fff;
-          font-size:20px; cursor:pointer; line-height:1;">✕</button>
+  <div id="editModal" class="profile-modal">
+    <div class="profile-modal-dialog">
+      <div class="profile-modal-header">
+        <span>Edit Profile</span>
+        <button type="button" class="profile-modal-close" onclick="closeModal()">✕</button>
       </div>
 
-      <div style="padding:24px;">
+      <div class="profile-modal-body">
         <form action="../controllers/student/update_profile.php" method="POST">
-          <div style="margin-bottom:14px;">
-            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
-            <input type="text" name="firstname" value="<?= $firstname ?>" style="width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;">
+          <input type="hidden" name="student_id" value="<?= (int)$student_id ?>">
+          <input type="hidden" name="studentid" value="<?= htmlspecialchars($_SESSION['studentid'] ?? '') ?>">
+          <input type="hidden" name="middlename" value="<?= htmlspecialchars($_SESSION['middlename'] ?? '') ?>">
+          <input type="hidden" name="redirect" value="student">
+
+          <div class="profile-form-group">
+            <label>First Name</label>
+            <input type="text" name="firstname" value="<?= $firstname ?>">
           </div>
 
-          <div style="margin-bottom:14px;">
-            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Last Name</label>
-            <input type="text" name="lastname" value="<?= $lastname ?>" style="width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;">
+          <div class="profile-form-group">
+            <label>Last Name</label>
+            <input type="text" name="lastname" value="<?= $lastname ?>">
           </div>
 
-          <div style="margin-bottom:14px;">
-            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Course</label>
-            <input type="text" name="course" value="<?= $course ?>" style="width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;">
+          <div class="profile-form-group">
+            <label>Course</label>
+            <input type="text" name="course" value="<?= $course ?>">
           </div>
 
-          <div style="margin-bottom:14px;">
-            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Year Level</label>
-            <input type="text" name="yearlvl" value="<?= $yearlvl ?>" style="width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;">
+          <div class="profile-form-group">
+            <label>Year Level</label>
+            <input type="text" name="yearlvl" value="<?= $yearlvl ?>">
           </div>
 
-          <div style="margin-bottom:14px;">
-            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Email</label>
-            <input type="email" name="email" value="<?= $email ?>" style="width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;">
+          <div class="profile-form-group">
+            <label>Email</label>
+            <input type="email" name="email" value="<?= $email ?>">
           </div>
 
-          <div style="margin-bottom:14px;">
-            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Address</label>
-            <input type="text" name="addrs" value="<?= $addrs ?>" style="width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif; outline:none; color:#111827;">
+          <div class="profile-form-group">
+            <label>Address</label>
+            <input type="text" name="addrs" value="<?= $addrs ?>">
           </div>
 
-          <div style="display:flex; gap:10px; justify-content:flex-end;">
-            <button type="button" onclick="closeModal()" style="padding:9px 20px; border:1px solid #d1d5db; border-radius:8px; background:#fff; font-size:13px; font-weight:500; font-family:'Poppins',sans-serif; cursor:pointer; color:#374151;">
-              Cancel
-            </button>
-            <button type="submit" style="padding:9px 24px; background:#1d3a6e; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer;">
-              Save Changes
-            </button>
+          <div class="profile-modal-actions">
+            <button type="button" class="btn-profile-cancel" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn-profile-save">Save Changes</button>
           </div>
         </form>
       </div>
@@ -225,6 +223,32 @@ require_once '../controllers/announcements/student_notifications.php';
   </div>
 
   <script>
+    function applyDarkMode() {
+      const enabled = localStorage.getItem('uc_dark_mode') === 'enabled';
+      document.body.classList.toggle('dark-mode', enabled);
+
+      const icon = document.getElementById('darkModeIcon');
+      const text = document.getElementById('darkModeText');
+      const button = document.getElementById('darkModeToggle');
+
+      if (button) {
+        button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      }
+
+      if (icon && text) {
+        icon.textContent = enabled ? '☀️' : '🌙';
+        text.textContent = enabled ? 'Light' : 'Dark';
+      }
+    }
+
+    function toggleDarkMode() {
+      const enabled = !document.body.classList.contains('dark-mode');
+      localStorage.setItem('uc_dark_mode', enabled ? 'enabled' : 'disabled');
+      applyDarkMode();
+    }
+
+    applyDarkMode();
+
     document.getElementById('navToggler').addEventListener('click', () => {
       document.getElementById('navLinks').classList.toggle('open');
       document.getElementById('sidebar').classList.toggle('open');

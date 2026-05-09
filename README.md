@@ -208,6 +208,9 @@ WHERE reservation_end_time IS NULL;
 ALTER TABLE lab_reservations
   MODIFY reservation_end_time TIME NOT NULL;
 
+ALTER TABLE sitin_records
+ADD COLUMN logout_time DATETIME NULL AFTER login_time;
+
 ```
 
 ---

@@ -3,6 +3,7 @@
 
 session_start();
 require_once '../config/db_config.php';
+require_once '../controllers/reservation/reservation_helpers.php';
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
@@ -13,6 +14,12 @@ if (empty($_SESSION['admin_logged_in'])) {
     header('Location: ../login_page.php');
     exit;
 }
+
+/*
+  Auto-cancel approved reservations when the student is already
+  more than 15 minutes late from the reservation start time.
+*/
+autoCancelLateReservations($conn);
 
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
 
@@ -29,18 +36,34 @@ if ($result) {
 }
 
 $now = time();
+$total_count = count($reservations);
 $pending_count = 0;
-$current_approved_count = 0;
+$approved_count = 0;
+$rejected_count = 0;
 $history_count = 0;
+$expired_pending_count = 0;
+
 foreach ($reservations as $r) {
     $end_ts = strtotime($r['reservation_date'] . ' ' . $r['reservation_end_time']);
-    if ($r['status'] === 'pending') {
+    $is_expired = $end_ts < $now;
+
+    if ($r['status'] === 'pending' && !$is_expired) {
         $pending_count++;
     }
-    if ($r['status'] === 'approved' && $end_ts >= $now) {
-        $current_approved_count++;
+
+    if ($r['status'] === 'pending' && $is_expired) {
+        $expired_pending_count++;
     }
-    if (($r['status'] === 'approved' && $end_ts < $now) || in_array($r['status'], ['rejected', 'cancelled', 'done'], true)) {
+
+    if ($r['status'] === 'approved' && !$is_expired) {
+        $approved_count++;
+    }
+
+    if (in_array($r['status'], ['rejected', 'cancelled'], true)) {
+        $rejected_count++;
+    }
+
+    if (($r['status'] === 'pending' && $is_expired) || ($r['status'] === 'approved' && $is_expired) || in_array($r['status'], ['rejected', 'cancelled', 'done'], true)) {
         $history_count++;
     }
 }
@@ -117,6 +140,184 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
   <style>
+    .reservation-summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 14px;
+      padding: 16px 18px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .summary-card {
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: default;
+      transition: all 0.16s ease;
+      text-align: left;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .summary-card:hover {
+      transform: none;
+      border-color: #e5e7eb;
+      box-shadow: none;
+    }
+
+    .summary-card .summary-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 5px;
+    }
+
+    .summary-card .summary-value {
+      font-size: 28px;
+      font-weight: 900;
+      color: #0f2d63;
+      line-height: 1;
+    }
+
+    .summary-card .summary-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .summary-card.total .summary-icon { background: #eff6ff; color: #1d4ed8; }
+    .summary-card.approved .summary-icon { background: #dcfce7; color: #15803d; }
+    .summary-card.rejected .summary-icon { background: #fee2e2; color: #dc2626; }
+    .summary-card.pending .summary-icon { background: #fff7ed; color: #d97706; }
+
+    .badge-status.expired {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+    }
+
+    .dot.expired {
+      background: #94a3b8;
+    }
+
+    .badge-status.approved_not_registered,
+    .status-pill.approved_not_registered {
+      background: #fff7ed;
+      color: #c2410c;
+      border: 1px solid #fed7aa;
+    }
+
+    .badge-status.approved_registered,
+    .status-pill.approved_registered {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+
+    .dot.approved_not_registered {
+      background: #f97316;
+    }
+
+    .dot.approved_registered {
+      background: #22c55e;
+    }
+
+
+    .confirm-toast {
+      display: none;
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10050;
+      width: min(460px, calc(100% - 28px));
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .confirm-toast.show {
+      display: block;
+      animation: confirmSlide .18s ease;
+    }
+
+    @keyframes confirmSlide {
+      from { opacity: 0; transform: translate(-50%, -10px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    .confirm-toast-box {
+      background: #fff;
+      border: 1px solid #dbe3ef;
+      border-radius: 16px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, .20);
+      padding: 16px;
+    }
+
+    .confirm-toast-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f2d63;
+      margin-bottom: 6px;
+    }
+
+    .confirm-toast-message {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+
+    .confirm-toast-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .confirm-toast-actions button {
+      border: none;
+      border-radius: 9px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 800;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+    }
+
+    .confirm-cancel-btn {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .confirm-ok-btn {
+      background: #1d4ed8;
+      color: #fff;
+    }
+
+    @media (max-width: 980px) {
+      .reservation-summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 520px) {
+      .reservation-summary-cards {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body class="admin-reservation-page">
@@ -191,7 +392,7 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
             <div class="rm-title"><i class="bi bi-calendar2-check"></i> Reservation Management</div>
             <div class="summary-mini">
               <span class="mini-pill"><?= $pending_count ?> Pending</span>
-              <span class="mini-pill"><?= $current_approved_count ?> Current Approved</span>
+              <span class="mini-pill"><?= $approved_count ?> Approved</span>
               <span class="mini-pill"><?= $history_count ?> History</span>
             </div>
           </div>
@@ -229,11 +430,13 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
               <label for="statusFilter">Status</label>
               <select class="filter-control" id="statusFilter" onchange="renderTable()">
                 <option value="all">All</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
+                <option value="pending">Pending Request</option>
+                <option value="approved">Post-Approved Request</option>
+                <option value="approved_not_registered">Approved Not Registered Sit-In</option>
+                <option value="approved_registered">Approved Registered Sit-In</option>
                 <option value="rejected">Rejected</option>
                 <option value="cancelled">Cancelled</option>
-                <option value="done">Done</option>
+                <option value="expired">Expired Request</option>
               </select>
             </div>
             <div class="filter-field search-field">
@@ -275,7 +478,7 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
               <div class="detail-actions">
                 <button type="button" class="btn-panel-action btn-approve" id="btnApprove" onclick="reservationAction('approve')"><i class="bi bi-check-lg"></i> Approve</button>
                 <button type="button" class="btn-panel-action btn-reject" id="btnReject" onclick="reservationAction('reject')"><i class="bi bi-x-circle"></i> Reject</button>
-                <button type="button" class="btn-panel-action btn-done wide" id="btnDone" onclick="reservationAction('done')"><i class="bi bi-check2-square"></i> Mark Done</button>
+                <button type="button" class="btn-panel-action btn-done wide" id="btnRegisterSitin" onclick="openSitinModalFromReservation()"><i class="bi bi-pc-display-horizontal"></i> Register Sit-in</button>
                 <button type="button" class="btn-panel-action btn-neutral wide" id="btnPcStatus" onclick="togglePcAvailability()"><i class="bi bi-ban"></i> Mark Unavailable</button>
               </div>
             </div>
@@ -283,11 +486,46 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
         </section>
 
         <section class="history-card">
+          <div class="reservation-summary-cards">
+            <div class="summary-card total" id="summaryTotal">
+              <div>
+                <div class="summary-label">Total Reservations</div>
+                <div class="summary-value"><?= $total_count ?></div>
+              </div>
+              <div class="summary-icon"><i class="bi bi-calendar-check"></i></div>
+            </div>
+
+            <div class="summary-card approved" id="summaryApproved">
+              <div>
+                <div class="summary-label">Post-Approved Request</div>
+                <div class="summary-value"><?= $approved_count ?></div>
+              </div>
+              <div class="summary-icon"><i class="bi bi-check-circle"></i></div>
+            </div>
+
+            <div class="summary-card rejected" id="summaryRejected">
+              <div>
+                <div class="summary-label">Rejected Request</div>
+                <div class="summary-value"><?= $rejected_count ?></div>
+              </div>
+              <div class="summary-icon"><i class="bi bi-x-circle"></i></div>
+            </div>
+
+            <div class="summary-card pending" id="summaryPending">
+              <div>
+                <div class="summary-label">Pending Request</div>
+                <div class="summary-value"><?= $pending_count ?></div>
+              </div>
+              <div class="summary-icon"><i class="bi bi-hourglass-split"></i></div>
+            </div>
+          </div>
+
           <div class="history-top">
             <div class="history-title-tabs">
               <span class="section-name"><i class="bi bi-card-list"></i> Reservation List</span>
-              <button type="button" class="history-tab active" id="tabCurrent" onclick="setTab('current')"><i class="bi bi-clock"></i> Current Requests</button>
-              <button type="button" class="history-tab" id="tabHistory" onclick="setTab('history')"><i class="bi bi-arrow-clockwise"></i> Reservation History</button>
+              <button type="button" class="history-tab active" id="tabPending" onclick="setTab('pending')"><i class="bi bi-hourglass-split"></i> Pending Request</button>
+              <button type="button" class="history-tab" id="tabPostApproved" onclick="setTab('postApproved')"><i class="bi bi-check2-circle"></i> Post-Approved Request</button>
+              <button type="button" class="history-tab" id="tabHistory" onclick="setTab('history')"><i class="bi bi-arrow-clockwise"></i> Request History</button>
             </div>
             <div class="entry-control">
               <span>Show</span>
@@ -500,12 +738,24 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
 
   <div class="toast-msg" id="toastMsg"></div>
 
+  <div class="confirm-toast" id="confirmToast">
+    <div class="confirm-toast-box">
+      <div class="confirm-toast-title"><i class="bi bi-question-circle"></i> Confirm Action</div>
+      <div class="confirm-toast-message" id="confirmToastMessage">Are you sure?</div>
+      <div class="confirm-toast-actions">
+        <button type="button" class="confirm-cancel-btn" id="confirmToastCancel">Cancel</button>
+        <button type="button" class="confirm-ok-btn" id="confirmToastOk">Continue</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const reservations = <?= $reservation_json ?: '[]' ?>;
-    let activeTab = 'current';
+    let activeTab = 'pending';
     let selectedSeat = null;
     let pendingSelectPc = <?= (int)$default_pc ?>;
+    let pendingReservationForDetails = null;
 
     const navToggler = document.getElementById('navToggler');
     if (navToggler) {
@@ -522,10 +772,30 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       setTimeout(() => toast.style.display = 'none', 2500);
     }
 
+    function askConfirm(message, onConfirm) {
+      const box = document.getElementById('confirmToast');
+      const msg = document.getElementById('confirmToastMessage');
+      const okBtn = document.getElementById('confirmToastOk');
+      const cancelBtn = document.getElementById('confirmToastCancel');
+
+      msg.textContent = message;
+      box.classList.add('show');
+
+      okBtn.onclick = function () {
+        box.classList.remove('show');
+        if (typeof onConfirm === 'function') onConfirm();
+      };
+
+      cancelBtn.onclick = function () {
+        box.classList.remove('show');
+      };
+    }
+
 
 
     // Admin sidebar modals: Search Student + Register Sit-in
     let currentStudent = null;
+    let selectedReservationIdForSitin = null;
 
     function openSearchModal() {
       const modal = document.getElementById('searchModal');
@@ -616,6 +886,7 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
 
     function resetSitinModal() {
       currentStudent = null;
+      selectedReservationIdForSitin = null;
       document.getElementById('sitinIdInput').value = '';
       document.getElementById('sitinPurpose').value = '';
       document.getElementById('sitinLab').value = '';
@@ -691,27 +962,48 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
         return;
       }
 
-      const formData = new FormData();
-      formData.append('studentid', currentStudent.studentid);
-      formData.append('purpose', purpose);
-      formData.append('lab', lab);
+      const message = selectedReservationIdForSitin
+        ? 'Register this approved reservation as a sit-in session?'
+        : 'Register this student for sit-in?';
 
-      fetch('../controllers/sitin/register_sitin.php', {
-        method: 'POST',
-        body: formData
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (!data.success) {
-            showSitinError('sitinSubmitError', data.message || 'Failed to register sit-in.');
-            return;
-          }
+      askConfirm(message, function () {
+        const formData = new FormData();
+        formData.append('studentid', currentStudent.studentid);
+        formData.append('purpose', purpose);
+        formData.append('lab', lab);
 
-          closeSitinModal();
-          showToast('Sit-in registered successfully.');
-          setTimeout(() => window.location.reload(), 900);
+        fetch('../controllers/sitin/register_sitin.php', {
+          method: 'POST',
+          body: formData
         })
-        .catch(() => showSitinError('sitinSubmitError', 'Something went wrong. Please try again.'));
+          .then(res => res.json())
+          .then(data => {
+            if (!data.success) {
+              showSitinError('sitinSubmitError', data.message || 'Failed to register sit-in.');
+              return;
+            }
+
+            if (selectedReservationIdForSitin) {
+              const doneData = new FormData();
+              doneData.append('reservation_id', selectedReservationIdForSitin);
+              doneData.append('action', 'done');
+
+              fetch('../controllers/reservation/admin_reservation_controller.php', {
+                method: 'POST',
+                body: doneData
+              }).finally(() => {
+                closeSitinModal();
+                showToast('Sit-in registered successfully.');
+                setTimeout(() => window.location.reload(), 900);
+              });
+            } else {
+              closeSitinModal();
+              showToast('Sit-in registered successfully.');
+              setTimeout(() => window.location.reload(), 900);
+            }
+          })
+          .catch(() => showSitinError('sitinSubmitError', 'Something went wrong. Please try again.'));
+      });
     }
 
     const searchModal = document.getElementById('searchModal');
@@ -753,12 +1045,66 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       return new Date(row.reservation_date + 'T' + endTime);
     }
 
-    function isCurrent(row) {
-      return row.status === 'pending' || (row.status === 'approved' && endDate(row) >= new Date());
+    function isExpiredRequest(row) {
+      return row.status === 'pending' && endDate(row) < new Date();
+    }
+
+    function isPendingRequest(row) {
+      return row.status === 'pending' && endDate(row) >= new Date();
+    }
+
+    function isPostApprovedRequest(row) {
+      return row.status === 'approved' && endDate(row) >= new Date();
+    }
+
+    function isApprovedNotRegistered(row) {
+      return row.status === 'approved' && endDate(row) < new Date();
+    }
+
+    function isApprovedRegistered(row) {
+      return row.status === 'done';
     }
 
     function isHistory(row) {
-      return (row.status === 'approved' && endDate(row) < new Date()) || ['rejected', 'cancelled', 'done'].includes(row.status);
+      return isExpiredRequest(row)
+        || isApprovedNotRegistered(row)
+        || isApprovedRegistered(row)
+        || ['rejected', 'cancelled'].includes(row.status);
+    }
+
+    function effectiveStatus(row) {
+      if (isExpiredRequest(row)) return 'expired';
+      if (isApprovedNotRegistered(row)) return 'approved_not_registered';
+      if (isApprovedRegistered(row)) return 'approved_registered';
+      return row.status;
+    }
+
+
+    function reservationToSeat(row, baseSeat = {}) {
+      const shownStatus = effectiveStatus(row);
+      let layoutStatus = baseSeat.layout_status || baseSeat.status || 'available';
+
+      if (row.status === 'pending') layoutStatus = 'pending';
+      if (row.status === 'approved') layoutStatus = 'reserved';
+      if (['rejected', 'cancelled', 'done'].includes(row.status) || shownStatus === 'expired') {
+        layoutStatus = 'unavailable';
+      }
+
+      return {
+        ...baseSeat,
+        pc_number: Number(row.pc_number),
+        status: shownStatus,
+        layout_status: layoutStatus,
+        reservation_status: shownStatus,
+        reservation_id: row.id,
+        studentid: row.studentid,
+        fullname: row.fullname,
+        purpose: row.purpose,
+        lab: row.lab,
+        reservation_date: row.reservation_date,
+        reservation_time: row.reservation_time,
+        reservation_end_time: row.reservation_end_time
+      };
     }
 
     function addOneHour(value) {
@@ -783,10 +1129,17 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       return order;
     }
 
+    function updateTabButtons() {
+      document.getElementById('tabPending').classList.toggle('active', activeTab === 'pending');
+      document.getElementById('tabPostApproved').classList.toggle('active', activeTab === 'postApproved');
+      document.getElementById('tabHistory').classList.toggle('active', activeTab === 'history');
+    }
+
     function setTab(tab) {
       activeTab = tab;
-      document.getElementById('tabCurrent').classList.toggle('active', tab === 'current');
-      document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+      const statusSelect = document.getElementById('statusFilter');
+      if (statusSelect) statusSelect.value = 'all';
+      updateTabButtons();
       renderTable();
     }
 
@@ -834,7 +1187,13 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
             if (!seatToSelect && (visualStatus === 'pending' || visualStatus === 'reserved')) seatToSelect = seat;
           });
 
-          selectSeat(seatToSelect || byPc[1] || { pc_number: 1, status: 'available' });
+          if (pendingReservationForDetails) {
+            const pc = Number(pendingReservationForDetails.pc_number);
+            selectSeat(reservationToSeat(pendingReservationForDetails, byPc[pc] || {}));
+            pendingReservationForDetails = null;
+          } else {
+            selectSeat(seatToSelect || byPc[1] || { pc_number: 1, status: 'available', layout_status: 'available' });
+          }
           pendingSelectPc = null;
         })
         .catch(() => {
@@ -864,16 +1223,80 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       document.getElementById('detailName').textContent = seat.fullname || '—';
       document.getElementById('detailPurpose').textContent = seat.purpose || '—';
       document.getElementById('detailDateTime').textContent = seat.reservation_date ? `${dateToLabel(seat.reservation_date)}, ${timeToLabel(seat.reservation_time)} - ${timeToLabel(seat.reservation_end_time)}` : '—';
-      document.getElementById('detailStatus').innerHTML = `<span class="badge-status ${shownStatus}"><span class="dot ${visualStatus}"></span>${shownStatus}</span>`;
+      document.getElementById('detailStatus').innerHTML = statusBadge(shownStatus);
 
       document.getElementById('btnApprove').disabled = !isPending;
       document.getElementById('btnReject').disabled = !hasReservation || (!isPending && !isApproved);
-      document.getElementById('btnDone').disabled = !isApproved;
-      document.getElementById('btnDone').style.display = isApproved ? 'inline-flex' : 'none';
+      const registerBtn = document.getElementById('btnRegisterSitin');
+      registerBtn.disabled = !isApproved;
+      registerBtn.style.display = isApproved ? 'inline-flex' : 'none';
 
       const pcStatusBtn = document.getElementById('btnPcStatus');
       pcStatusBtn.disabled = false;
       pcStatusBtn.innerHTML = isUnavailable ? '<i class="bi bi-check2-circle"></i> Mark Available' : '<i class="bi bi-ban"></i> Mark Unavailable';
+    }
+
+    function ensureSelectOption(selectId, value, label = null) {
+      const select = document.getElementById(selectId);
+      if (!select || !value) return;
+      if (![...select.options].some(option => option.value === value)) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label || value;
+        select.appendChild(option);
+      }
+    }
+
+    function nameInitials(name) {
+      const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return 'ST';
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function openSitinModalFromReservation() {
+      if (!selectedSeat || !selectedSeat.reservation_id || !(selectedSeat.reservation_status === 'approved' || selectedSeat.status === 'approved' || selectedSeat.layout_status === 'reserved')) {
+        showToast('Please select an approved reservation first.');
+        return;
+      }
+
+      openSitinModal();
+      selectedReservationIdForSitin = selectedSeat.reservation_id;
+
+      currentStudent = {
+        studentid: selectedSeat.studentid || '',
+        firstname: selectedSeat.fullname || '',
+        lastname: '',
+        middlename: '',
+        course: '',
+        yearlvl: '',
+        session_credits: 'Approved'
+      };
+
+      document.getElementById('sitinIdInput').value = selectedSeat.studentid || '';
+      document.getElementById('sitinAvatar').textContent = nameInitials(selectedSeat.fullname || selectedSeat.studentid);
+      document.getElementById('sitinStudentName').textContent = selectedSeat.fullname || 'Selected student';
+      document.getElementById('sitinStudentCourse').textContent = 'Approved reservation · ' + pcLabel(selectedSeat.pc_number);
+      document.getElementById('sitinSessionBadge').textContent = 'Approved';
+      document.getElementById('sitinStudentInfo').style.display = 'block';
+      document.getElementById('sitinFormFields').style.display = 'block';
+
+      document.getElementById('sitinPurpose').value = selectedSeat.purpose || '';
+      ensureSelectOption('sitinLab', selectedSeat.lab || document.getElementById('viewLab').value);
+      document.getElementById('sitinLab').value = selectedSeat.lab || document.getElementById('viewLab').value;
+    }
+
+    function confirmMessage(action) {
+      const messages = {
+        approve: 'Approve this reservation request?',
+        reject: 'Reject this reservation request?',
+        cancel: 'Cancel this approved reservation?',
+        done: 'Mark this reservation as done?',
+        delete: 'Delete this reservation request? This action cannot be undone.',
+        mark_unavailable: 'Mark this PC as unavailable?',
+        mark_available: 'Mark this PC as available again?'
+      };
+      return messages[action] || 'Continue this action?';
     }
 
     function reservationAction(action) {
@@ -882,36 +1305,47 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
         return;
       }
       if (action === 'reject' && selectedSeat.reservation_status === 'approved') action = 'cancel';
-      const formData = new FormData();
-      formData.append('reservation_id', selectedSeat.reservation_id);
-      formData.append('action', action);
-      postReservationAction(formData);
+
+      askConfirm(confirmMessage(action), function () {
+        const formData = new FormData();
+        formData.append('reservation_id', selectedSeat.reservation_id);
+        formData.append('action', action);
+        postReservationAction(formData);
+      });
     }
 
     function tableAction(id, action) {
       if (action === 'delete') return deleteReservation(id);
-      const formData = new FormData();
-      formData.append('reservation_id', id);
-      formData.append('action', action);
-      postReservationAction(formData);
+
+      askConfirm(confirmMessage(action), function () {
+        const formData = new FormData();
+        formData.append('reservation_id', id);
+        formData.append('action', action);
+        postReservationAction(formData);
+      });
     }
 
     function deleteReservation(id) {
-      if (!confirm('Delete this reservation?')) return;
-      const formData = new FormData();
-      formData.append('reservation_id', id);
-      formData.append('action', 'delete');
-      postReservationAction(formData);
+      askConfirm(confirmMessage('delete'), function () {
+        const formData = new FormData();
+        formData.append('reservation_id', id);
+        formData.append('action', 'delete');
+        postReservationAction(formData);
+      });
     }
 
     function togglePcAvailability() {
       if (!selectedSeat) return;
       const visualStatus = selectedSeat.layout_status || selectedSeat.status;
-      const formData = new FormData();
-      formData.append('action', visualStatus === 'unavailable' ? 'mark_available' : 'mark_unavailable');
-      formData.append('lab', document.getElementById('viewLab').value);
-      formData.append('pc_number', selectedSeat.pc_number);
-      postReservationAction(formData, true);
+      const action = visualStatus === 'unavailable' ? 'mark_available' : 'mark_unavailable';
+
+      askConfirm(confirmMessage(action), function () {
+        const formData = new FormData();
+        formData.append('action', action);
+        formData.append('lab', document.getElementById('viewLab').value);
+        formData.append('pc_number', selectedSeat.pc_number);
+        postReservationAction(formData, true);
+      });
     }
 
     function postReservationAction(formData, noReload = false) {
@@ -930,7 +1364,15 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
 
     function viewReservation(id) {
       const row = reservations.find(r => Number(r.id) === Number(id));
-      if (!row) return;
+      if (!row) {
+        showToast('Reservation not found.');
+        return;
+      }
+
+      const seatFromRow = reservationToSeat(row);
+      selectedSeat = seatFromRow;
+      updateDetails(seatFromRow);
+
       document.getElementById('viewLab').value = row.lab;
       document.getElementById('viewDate').value = row.reservation_date;
       const timeValue = String(row.reservation_time).substring(0, 5);
@@ -940,7 +1382,9 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       document.getElementById('viewTime').value = timeValue;
       document.getElementById('viewEndTime').value = endValue;
       pendingSelectPc = Number(row.pc_number);
+      pendingReservationForDetails = row;
       loadSeats();
+      showToast('Reservation details loaded above.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -955,22 +1399,38 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
     }
 
     function statusBadge(status) {
-      return `<span class="status-pill ${status}"><span class="dot ${status === 'approved' ? 'available' : status === 'pending' ? 'pending' : status === 'rejected' ? 'reserved' : 'unavailable'}"></span>${status}</span>`;
+      const dotClass = status === 'approved' ? 'available'
+        : status === 'approved_not_registered' ? 'approved_not_registered'
+        : status === 'approved_registered' ? 'approved_registered'
+        : status === 'pending' ? 'pending'
+        : status === 'rejected' ? 'reserved'
+        : status === 'expired' ? 'expired'
+        : 'unavailable';
+
+      const labels = {
+        pending: 'pending request',
+        approved: 'post-approved request',
+        approved_not_registered: 'approved not registered sit-in',
+        approved_registered: 'approved registered sit-in',
+        rejected: 'rejected',
+        cancelled: 'cancelled',
+        expired: 'expired request',
+        available: 'available'
+      };
+
+      const label = labels[status] || status;
+      return `<span class="status-pill ${status}"><span class="dot ${dotClass}"></span>${label}</span>`;
     }
 
     function rowActions(row) {
       const id = Number(row.id);
-      if (activeTab === 'history') {
-        return `<div class="row-actions"><button type="button" class="icon-btn delete" title="Delete" onclick="deleteReservation(${id})"><i class="bi bi-trash"></i></button></div>`;
+      const shownStatus = effectiveStatus(row);
+      let viewTitle = 'View details above';
+      if (activeTab === 'postApproved' || row.status === 'approved') {
+        viewTitle = 'View details above to register sit-in';
       }
 
-      let buttons = `<button type="button" class="icon-btn" title="View" onclick="viewReservation(${id})"><i class="bi bi-eye"></i></button>`;
-      if (row.status === 'pending') {
-        buttons += `<button type="button" class="icon-btn success" title="Approve" onclick="tableAction(${id}, 'approve')"><i class="bi bi-check-lg"></i></button>`;
-        buttons += `<button type="button" class="icon-btn reject" title="Reject" onclick="tableAction(${id}, 'reject')"><i class="bi bi-x-lg"></i></button>`;
-      } else if (row.status === 'approved') {
-        buttons += `<button type="button" class="icon-btn done" title="Mark Done" onclick="tableAction(${id}, 'done')"><i class="bi bi-check2-square"></i></button>`;
-      }
+      let buttons = `<button type="button" class="icon-btn" title="${viewTitle}" onclick="viewReservation(${id})"><i class="bi bi-eye"></i></button>`;
       buttons += `<button type="button" class="icon-btn delete" title="Delete" onclick="deleteReservation(${id})"><i class="bi bi-trash"></i></button>`;
       return `<div class="row-actions">${buttons}</div>`;
     }
@@ -982,10 +1442,20 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       const limit = limitValue === 'all' ? Infinity : Number(limitValue);
       const tbody = document.getElementById('reservationTbody');
 
-      let rows = reservations.filter(row => activeTab === 'current' ? isCurrent(row) : isHistory(row));
-      rows = rows.filter(row => status === 'all' || row.status === status);
+      let rows = [];
+
+      if (activeTab === 'pending') {
+        rows = reservations.filter(row => isPendingRequest(row));
+      } else if (activeTab === 'postApproved') {
+        rows = reservations.filter(row => isPostApprovedRequest(row));
+      } else {
+        rows = reservations.filter(row => isHistory(row));
+      }
+
+      rows = rows.filter(row => status === 'all' || effectiveStatus(row) === status || row.status === status);
       rows = rows.filter(row => {
-        const text = `${row.id} ${row.studentid} ${row.fullname} ${row.lab} ${row.pc_number} ${row.purpose} ${row.status}`.toLowerCase();
+        const shownStatus = effectiveStatus(row);
+        const text = `${row.id} ${row.studentid} ${row.fullname} ${row.lab} ${row.pc_number} ${row.purpose} ${row.status} ${shownStatus}`.toLowerCase();
         return text.includes(q);
       });
 
@@ -997,8 +1467,9 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       } else {
         tbody.innerHTML = rows.map(row => {
           const rid = 'R-' + new Date(row.reservation_date + 'T00:00:00').getFullYear() + '-' + String(row.id).padStart(5, '0');
+          const shownStatus = effectiveStatus(row);
           return `
-            <tr data-status="${row.status}">
+            <tr data-status="${shownStatus}">
               <td><strong>${rid}</strong></td>
               <td>${row.studentid || '—'}</td>
               <td>${row.fullname || '—'}</td>
@@ -1006,7 +1477,7 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
               <td>${pcLabel(row.pc_number)}</td>
               <td>${row.purpose || '—'}</td>
               <td>${dateToLabel(row.reservation_date)}, ${timeToLabel(row.reservation_time)} - ${timeToLabel(row.reservation_end_time)}</td>
-              <td>${statusBadge(row.status)}</td>
+              <td>${statusBadge(shownStatus)}</td>
               <td>${rowActions(row)}</td>
             </tr>
           `;
@@ -1016,6 +1487,7 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
       document.getElementById('entriesInfo').textContent = `Showing ${rows.length} of ${total} entries`;
     }
 
+    updateTabButtons();
     loadSeats();
     renderTable();
   </script>
