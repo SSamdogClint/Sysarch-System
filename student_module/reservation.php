@@ -26,6 +26,7 @@ $initials   = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
 require_once '../controllers/announcements/student_notifications.php';
 
 $reservations = [];
+
 $stmt = $conn->prepare("
     SELECT id, purpose, lab, pc_number, reservation_date, reservation_time,
            COALESCE(reservation_end_time, ADDTIME(reservation_time, '01:00:00')) AS reservation_end_time,
@@ -34,13 +35,174 @@ $stmt = $conn->prepare("
     WHERE student_id = ?
     ORDER BY reservation_date DESC, reservation_time DESC, created_at DESC
 ");
+
 $stmt->bind_param('i', $student_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
 while ($row = $result->fetch_assoc()) {
     $reservations[] = $row;
 }
+
 $stmt->close();
+
+$today = date('Y-m-d');
+
+$allReservations = $reservations;
+$currentReservations = [];
+$pendingReservations = [];
+
+foreach ($reservations as $reservation) {
+    $status = strtolower($reservation['status'] ?? '');
+    $reservationDate = $reservation['reservation_date'] ?? '';
+
+    if ($status === 'pending') {
+        $pendingReservations[] = $reservation;
+    }
+
+    /*
+      Current Reservation:
+      - approved future/today reservation can be disabled/cancelled
+      - cancelled future/today reservation can be enabled again to pending
+    */
+    if (
+        $reservationDate >= $today &&
+        in_array($status, ['approved', 'cancelled'], true)
+    ) {
+        $currentReservations[] = $reservation;
+    }
+}
+
+function reservationStatusBadge(string $status): string
+{
+    $status = strtolower(trim($status));
+
+    if ($status === 'approved') {
+        return 'success';
+    }
+
+    if ($status === 'pending') {
+        return 'warning';
+    }
+
+    if ($status === 'rejected') {
+        return 'danger';
+    }
+
+    if ($status === 'cancelled') {
+        return 'secondary';
+    }
+
+    if ($status === 'done') {
+        return 'primary';
+    }
+
+    return 'dark';
+}
+
+function formatReservationDate(?string $date): string
+{
+    if (!$date) {
+        return '—';
+    }
+
+    return date('M d, Y', strtotime($date));
+}
+
+function formatReservationTime(?string $start, ?string $end): string
+{
+    if (!$start) {
+        return '—';
+    }
+
+    $startLabel = date('h:i A', strtotime($start));
+    $endLabel = $end ? date('h:i A', strtotime($end)) : date('h:i A', strtotime($start . ' +1 hour'));
+
+    return $startLabel . ' - ' . $endLabel;
+}
+
+function renderReservationRows(array $reservations, string $tabType, string $today): void
+{
+    if (empty($reservations)) {
+        echo '
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    No reservation records found.
+                </td>
+            </tr>
+        ';
+        return;
+    }
+
+    foreach ($reservations as $i => $r) {
+        $id = (int)$r['id'];
+        $status = strtolower($r['status'] ?? '');
+        $statusClass = reservationStatusBadge($status);
+        $reservationDate = $r['reservation_date'] ?? '';
+        $isFutureOrToday = $reservationDate >= $today;
+
+        $lab = htmlspecialchars($r['lab'] ?? '—');
+        $pcNumber = !empty($r['pc_number']) ? 'PC ' . str_pad((string)(int)$r['pc_number'], 2, '0', STR_PAD_LEFT) : '—';
+        $purpose = htmlspecialchars($r['purpose'] ?? '—');
+        $date = formatReservationDate($r['reservation_date'] ?? null);
+        $time = formatReservationTime($r['reservation_time'] ?? null, $r['reservation_end_time'] ?? null);
+        $statusText = htmlspecialchars(ucfirst($status));
+        $createdAt = !empty($r['created_at']) ? date('M d, Y h:i A', strtotime($r['created_at'])) : '—';
+
+        echo '<tr>';
+        echo '<td>' . ($i + 1) . '</td>';
+        echo '<td>' . $lab . '</td>';
+        echo '<td>' . htmlspecialchars($pcNumber) . '</td>';
+        echo '<td>' . $purpose . '</td>';
+        echo '<td>' . htmlspecialchars($date) . '</td>';
+        echo '<td>' . htmlspecialchars($time) . '</td>';
+        echo '<td><span class="badge text-bg-' . $statusClass . '">' . $statusText . '</span></td>';
+
+        echo '<td>';
+
+        if ($tabType === 'current') {
+            if ($status === 'approved' && $isFutureOrToday) {
+                echo '
+                    <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="toggleReservation(' . $id . ', \'disable\')">
+                        Disable
+                    </button>
+                ';
+            } elseif ($status === 'cancelled' && $isFutureOrToday) {
+                echo '
+                    <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-success"
+                        onclick="toggleReservation(' . $id . ', \'enable\')">
+                        Enable
+                    </button>
+                ';
+            } else {
+                echo '<span class="text-muted small">No action</span>';
+            }
+        } elseif ($tabType === 'pending') {
+            if ($status === 'pending' && $isFutureOrToday) {
+                echo '
+                    <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="toggleReservation(' . $id . ', \'disable\')">
+                        Cancel
+                    </button>
+                ';
+            } else {
+                echo '<span class="text-muted small">No action</span>';
+            }
+        } else {
+            echo '<span class="text-muted small">' . htmlspecialchars($createdAt) . '</span>';
+        }
+
+        echo '</td>';
+        echo '</tr>';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,16 +212,22 @@ $stmt->close();
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+
   <title>UC – Reservation</title>
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/student.css">
-  <style>
-  
-  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 </head>
+
 <body class="student-reservation-page student-dashboard-page">
+  <script>
+    if (localStorage.getItem('uc_dark_mode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
 
   <nav class="uc-nav">
     <a class="nav-brand" href="student_dashboard.php">
@@ -69,19 +237,30 @@ $stmt->close();
         <div class="nav-sub">Main Campus · CCS</div>
       </div>
     </a>
-    <button class="nav-toggler" id="navToggler" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+
+    <button class="nav-toggler" id="navToggler" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+
     <div class="nav-links" id="navLinks">
       <div class="notif-dropdown" id="notifDropdown">
         <button type="button" class="notif-bell-btn" id="notifBellBtn" aria-label="Notifications">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path><path d="M10 21a2 2 0 0 0 4 0"></path></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path>
+            <path d="M10 21a2 2 0 0 0 4 0"></path>
+          </svg>
           <span class="notif-dot <?= !empty($notifications) ? 'show' : '' ?>" id="notifDot"></span>
         </button>
+
         <div class="notif-menu" id="notifMenu">
           <div class="notif-menu-header">Notifications</div>
+
           <?php if (!empty($notifications)): ?>
             <?php foreach ($notifications as $notif): ?>
               <div class="notif-menu-item">
-                <div class="notif-type <?= htmlspecialchars($notif['type']) ?>"><?= htmlspecialchars($notif['label'] ?? ($notif['type'] === 'announcement' ? 'Announcement' : 'Session')) ?></div>
+                <div class="notif-type <?= htmlspecialchars($notif['type']) ?>">
+                  <?= htmlspecialchars($notif['label'] ?? ($notif['type'] === 'announcement' ? 'Announcement' : 'Session')) ?>
+                </div>
                 <div class="notif-title"><?= htmlspecialchars($notif['title']) ?></div>
                 <div class="notif-text"><?= htmlspecialchars($notif['message']) ?></div>
                 <div class="notif-time"><?= date('M d, Y h:i A', strtotime($notif['created_at'])) ?></div>
@@ -92,8 +271,18 @@ $stmt->close();
           <?php endif; ?>
         </div>
       </div>
-      <span style="font-size:13px;color:#6b7280;padding:0 4px;"><?= $firstname . ' ' . $lastname ?></span>
+
+      <button type="button" class="dark-toggle" id="darkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode" aria-pressed="false">
+        <i class="bi bi-moon-stars"></i>
+        <span>Dark</span>
+      </button>
+
+      <span style="font-size:13px;color:#6b7280;padding:0 4px;">
+        <?= $firstname . ' ' . $lastname ?>
+      </span>
+
       <div class="nav-divider"></div>
+
       <a class="nav-link" href="../controllers/auth/logout.php">Log out</a>
     </div>
   </nav>
@@ -108,6 +297,7 @@ $stmt->close();
             <h4>📅 Create Reservation</h4>
             <span style="font-size:11px;color:#bfdbfe;">Select slot first</span>
           </div>
+
           <div class="reservation-body">
             <div class="message-box" id="messageBox"></div>
 
@@ -133,6 +323,7 @@ $stmt->close();
                 <label for="reservationTime">Start Time</label>
                 <input type="time" id="reservationTime" value="08:00" onchange="syncEndTime(); loadSeats();">
               </div>
+
               <div class="field">
                 <label for="reservationEndTime">End Time</label>
                 <input type="time" id="reservationEndTime" value="09:00" onchange="loadSeats()">
@@ -145,7 +336,10 @@ $stmt->close();
             </div>
 
             <input type="hidden" id="selectedPc">
-            <button class="btn-reserve" id="reserveBtn" onclick="submitReservation()" disabled>Choose a PC first</button>
+
+            <button class="btn-reserve" id="reserveBtn" onclick="submitReservation()" disabled>
+              Choose a PC first
+            </button>
           </div>
         </section>
 
@@ -154,6 +348,7 @@ $stmt->close();
             <h4>🖥️ Available PCs</h4>
             <span style="font-size:11px;color:#bfdbfe;">8 PCs × 7 rows · two doors at right</span>
           </div>
+
           <div class="reservation-body">
             <div class="lab-wrap">
               <div class="lab-title" id="labTitle">Lab 524 Layout</div>
@@ -162,6 +357,7 @@ $stmt->close();
               <div class="door bottom">DOOR</div>
               <div class="pc-grid" id="pcGrid"></div>
             </div>
+
             <div class="legend">
               <div class="legend-item"><span class="legend-dot green"></span> Available</div>
               <div class="legend-item"><span class="legend-dot yellow"></span> Pending</div>
@@ -173,35 +369,146 @@ $stmt->close();
         </section>
       </div>
 
-      <div style="padding:0 20px 20px;">
-        <section class="reservation-panel">
-          <div class="reservation-panel-header"><h4>📋 My Reservation History</h4><span style="font-size:11px;color:#bfdbfe;"><?= count($reservations) ?> records</span></div>
-          <div style="overflow-x:auto;">
-            <table class="history-table">
-              <thead><tr><th>#</th><th>Lab</th><th>PC</th><th>Purpose</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
-              <tbody>
-                <?php if (empty($reservations)): ?>
-                  <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:24px;">No reservations yet.</td></tr>
-                <?php else: ?>
-                  <?php foreach ($reservations as $i => $r): ?>
-                    <tr>
-                      <td><?= $i + 1 ?></td>
-                      <td><?= htmlspecialchars($r['lab']) ?></td>
-                      <td>PC <?= str_pad((string)(int)$r['pc_number'], 2, '0', STR_PAD_LEFT) ?></td>
-                      <td><?= htmlspecialchars($r['purpose']) ?></td>
-                      <td><?= date('M d, Y', strtotime($r['reservation_date'])) ?></td>
-                      <td><?= date('h:i A', strtotime($r['reservation_time'])) ?> - <?= date('h:i A', strtotime($r['reservation_end_time'])) ?></td>
-                      <td><span class="status-pill status-<?= htmlspecialchars($r['status']) ?>"><?= htmlspecialchars($r['status']) ?></span></td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </tbody>
-            </table>
+      <div class="container-fluid px-4 pb-4">
+        <section class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-0 pt-4 px-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div>
+                <h4 class="mb-1">
+                  <i class="bi bi-calendar-check me-1"></i>
+                  Reservation Records
+                </h4>
+                <p class="text-muted mb-0">
+                  View all, current, and pending reservations.
+                </p>
+              </div>
+
+              <span class="badge text-bg-primary rounded-pill">
+                <?= count($allReservations) ?> total records
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body p-4">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-1"></i>
+              In <strong>Current Reservation</strong>, you can disable an approved reservation or enable a cancelled future reservation back to pending.
+            </div>
+
+            <ul class="nav nav-tabs" id="reservationTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button 
+                  class="nav-link active" 
+                  id="all-tab" 
+                  data-bs-toggle="tab" 
+                  data-bs-target="#all-reservations" 
+                  type="button" 
+                  role="tab">
+                  All Reservation
+                  <span class="badge text-bg-secondary ms-1"><?= count($allReservations) ?></span>
+                </button>
+              </li>
+
+              <li class="nav-item" role="presentation">
+                <button 
+                  class="nav-link" 
+                  id="current-tab" 
+                  data-bs-toggle="tab" 
+                  data-bs-target="#current-reservations" 
+                  type="button" 
+                  role="tab">
+                  Current Reservation
+                  <span class="badge text-bg-secondary ms-1"><?= count($currentReservations) ?></span>
+                </button>
+              </li>
+
+              <li class="nav-item" role="presentation">
+                <button 
+                  class="nav-link" 
+                  id="pending-tab" 
+                  data-bs-toggle="tab" 
+                  data-bs-target="#pending-reservations" 
+                  type="button" 
+                  role="tab">
+                  Pending Reservation
+                  <span class="badge text-bg-secondary ms-1"><?= count($pendingReservations) ?></span>
+                </button>
+              </li>
+            </ul>
+
+            <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white" id="reservationTabsContent">
+              <div class="tab-pane fade show active" id="all-reservations" role="tabpanel">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Lab</th>
+                        <th>PC</th>
+                        <th>Purpose</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php renderReservationRows($allReservations, 'all', $today); ?>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="current-reservations" role="tabpanel">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Lab</th>
+                        <th>PC</th>
+                        <th>Purpose</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Control</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php renderReservationRows($currentReservations, 'current', $today); ?>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="pending-reservations" role="tabpanel">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Lab</th>
+                        <th>PC</th>
+                        <th>Purpose</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Control</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php renderReservationRows($pendingReservations, 'pending', $today); ?>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </div>
     </main>
   </div>
+
   <div id="editModal" style="
     display:none; position:fixed; inset:0; z-index:9998;
     background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
@@ -292,90 +599,187 @@ $stmt->close();
       </div>
     </div>
   </div>
+
+  <!-- Beautiful Message Modal -->
+  <div class="modal fade" id="appMessageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="modal-body text-center p-5">
+          <div id="appMessageIcon" class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle" style="width:70px;height:70px;">
+            <i class="bi bi-check-circle fs-1"></i>
+          </div>
+
+          <h5 class="fw-bold mb-2" id="appMessageTitle">Success</h5>
+          <p class="text-muted mb-4" id="appMessageText">Action completed successfully.</p>
+
+          <button type="button" class="btn btn-primary px-4 rounded-pill" data-bs-dismiss="modal">
+            Okay
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Beautiful Confirm Modal -->
+  <div class="modal fade" id="appConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="modal-body p-5 text-center">
+          <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning" style="width:70px;height:70px;">
+            <i class="bi bi-question-circle fs-1"></i>
+          </div>
+
+          <h5 class="fw-bold mb-2" id="appConfirmTitle">Confirm Action</h5>
+          <p class="text-muted mb-4" id="appConfirmText">Are you sure you want to continue?</p>
+
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-light border px-4 rounded-pill" data-bs-dismiss="modal">
+              Cancel
+            </button>
+
+            <button type="button" class="btn btn-primary px-4 rounded-pill" id="appConfirmYesBtn">
+              Yes, Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
+  if (localStorage.getItem('uc_dark_mode') === 'enabled') {
+    document.body.classList.add('dark-mode');
+  }
+
+  function applyDarkMode() {
+    const enabled = localStorage.getItem('uc_dark_mode') === 'enabled';
+
+    document.body.classList.toggle('dark-mode', enabled);
+
+    const btn = document.getElementById('darkModeToggle');
+
+    if (btn) {
+      btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+
+      btn.innerHTML = enabled
+        ? '<i class="bi bi-sun"></i><span>Light</span>'
+        : '<i class="bi bi-moon-stars"></i><span>Dark</span>';
+    }
+  }
+
+  function toggleDarkMode() {
+    const enabled = !document.body.classList.contains('dark-mode');
+
+    localStorage.setItem('uc_dark_mode', enabled ? 'enabled' : 'disabled');
+
+    applyDarkMode();
+  }
+
+  applyDarkMode();
+
   const pcGrid = document.getElementById('pcGrid');
   const reserveBtn = document.getElementById('reserveBtn');
 
-  document.getElementById('navToggler').addEventListener('click', () => {
-    document.getElementById('navLinks').classList.toggle('open');
-    document.getElementById('sidebar').classList.toggle('open');
-  });
+  const navToggler = document.getElementById('navToggler');
+
+  if (navToggler) {
+    navToggler.addEventListener('click', () => {
+      const navLinks = document.getElementById('navLinks');
+      const sidebar = document.getElementById('sidebar');
+
+      if (navLinks) {
+        navLinks.classList.toggle('open');
+      }
+
+      if (sidebar) {
+        sidebar.classList.toggle('open');
+      }
+    });
+  }
 
   const notifications = <?= json_encode($notifications, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-const notifBellBtn = document.getElementById('notifBellBtn');
-const notifMenu = document.getElementById('notifMenu');
-const notifDot = document.getElementById('notifDot');
-const notifDropdown = document.getElementById('notifDropdown');
-const notifStorageKey = 'student_notif_last_seen_<?= (int)$student_id ?>';
+  const notifBellBtn = document.getElementById('notifBellBtn');
+  const notifMenu = document.getElementById('notifMenu');
+  const notifDot = document.getElementById('notifDot');
+  const notifDropdown = document.getElementById('notifDropdown');
+  const notifStorageKey = 'student_notif_last_seen_<?= (int)$student_id ?>';
 
-function getLatestNotifTime() {
-  if (!notifications.length) return 0;
-  return Math.max(...notifications.map(n => new Date(n.created_at).getTime() || 0));
-}
-
-function updateNotifState() {
-  const lastSeen = parseInt(localStorage.getItem(notifStorageKey) || '0', 10);
-  const latest = getLatestNotifTime();
-
-  if (latest > lastSeen) {
-    notifDot.classList.add('show');
-    notifBellBtn.classList.add('has-new');
-  } else {
-    notifDot.classList.remove('show');
-    notifBellBtn.classList.remove('has-new');
+  function getLatestNotifTime() {
+    if (!notifications.length) return 0;
+    return Math.max(...notifications.map(n => new Date(n.created_at).getTime() || 0));
   }
-}
 
-function openModal() {
-  const modal = document.getElementById('editModal');
-  if (modal) {
-    modal.style.display = 'flex';
+  function updateNotifState() {
+    if (!notifDot || !notifBellBtn) return;
+
+    const lastSeen = parseInt(localStorage.getItem(notifStorageKey) || '0', 10);
+    const latest = getLatestNotifTime();
+
+    if (latest > lastSeen) {
+      notifDot.classList.add('show');
+      notifBellBtn.classList.add('has-new');
+    } else {
+      notifDot.classList.remove('show');
+      notifBellBtn.classList.remove('has-new');
+    }
   }
-}
 
-function closeModal() {
-  const modal = document.getElementById('editModal');
-  if (modal) {
-    modal.style.display = 'none';
+  function openModal() {
+    const modal = document.getElementById('editModal');
+
+    if (modal) {
+      modal.style.display = 'flex';
+    }
   }
-}
 
-const editModal = document.getElementById('editModal');
+  function closeModal() {
+    const modal = document.getElementById('editModal');
 
-if (editModal) {
-  editModal.addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeModal();
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  const editModal = document.getElementById('editModal');
+
+  if (editModal) {
+    editModal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+  }
+
+  if (notifBellBtn && notifMenu) {
+    notifBellBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      notifMenu.classList.toggle('open');
+
+      if (notifMenu.classList.contains('open')) {
+        localStorage.setItem(notifStorageKey, String(getLatestNotifTime()));
+        updateNotifState();
+      }
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    if (notifDropdown && notifMenu && !notifDropdown.contains(e.target)) {
+      notifMenu.classList.remove('open');
     }
   });
-}
 
-if (notifBellBtn) {
-  notifBellBtn.addEventListener('click', function (e) {
-    e.stopPropagation();
-    notifMenu.classList.toggle('open');
-
-    if (notifMenu.classList.contains('open')) {
-      localStorage.setItem(notifStorageKey, String(getLatestNotifTime()));
-      updateNotifState();
-    }
-  });
-}
-
-document.addEventListener('click', function (e) {
-  if (notifDropdown && !notifDropdown.contains(e.target)) {
-    notifMenu.classList.remove('open');
-  }
-});
-
-updateNotifState();
+  updateNotifState();
 
   function addOneHour(timeValue) {
     if (!timeValue) return '';
+
     const [h, m] = timeValue.split(':').map(Number);
     const date = new Date(2000, 0, 1, h, m);
+
     date.setHours(date.getHours() + 1);
+
     return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
   }
 
@@ -385,16 +789,21 @@ updateNotifState();
 
   function seatOrder() {
     const order = [];
+
     for (let row = 0; row < 7; row++) {
       for (let col = 8; col >= 1; col--) {
         order.push(row * 8 + col);
       }
     }
+
     return order;
   }
 
   function showMessage(type, text) {
     const box = document.getElementById('messageBox');
+
+    if (!box) return;
+
     box.className = 'message-box ' + type;
     box.textContent = text;
     box.style.display = 'block';
@@ -408,10 +817,12 @@ updateNotifState();
 
   function loadSeats() {
     clearSelection();
+
     const lab = document.getElementById('lab').value;
     const date = document.getElementById('reservationDate').value;
     const time = document.getElementById('reservationTime').value;
     const endTime = document.getElementById('reservationEndTime').value;
+
     document.getElementById('labTitle').textContent = lab + ' Layout';
 
     if (!lab || !date || !time || !endTime) return;
@@ -432,12 +843,22 @@ updateNotifState();
         }
 
         const byPc = {};
-        data.seats.forEach(seat => byPc[seat.pc_number] = seat);
+
+        data.seats.forEach(seat => {
+          byPc[seat.pc_number] = seat;
+        });
+
         pcGrid.innerHTML = '';
 
         seatOrder().forEach(pc => {
-          const seat = byPc[pc];
-          const visualStatus = seat.layout_status || seat.status;
+          const seat = byPc[pc] || {
+            pc_number: pc,
+            status: 'available',
+            layout_status: 'available'
+          };
+
+          const visualStatus = seat.layout_status || seat.status || 'available';
+
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'pc-seat ' + visualStatus;
@@ -447,6 +868,7 @@ updateNotifState();
           if (visualStatus === 'available') {
             btn.addEventListener('click', () => selectPc(pc, btn));
           }
+
           pcGrid.appendChild(btn);
         });
       })
@@ -457,7 +879,9 @@ updateNotifState();
 
   function selectPc(pc, btn) {
     document.querySelectorAll('.pc-seat.selected').forEach(el => el.classList.remove('selected'));
+
     btn.classList.add('selected');
+
     document.getElementById('selectedPc').value = pc;
     reserveBtn.disabled = false;
     reserveBtn.textContent = 'Reserve PC ' + String(pc).padStart(2, '0');
@@ -473,6 +897,7 @@ updateNotifState();
     }
 
     const formData = new FormData();
+
     formData.append('lab', document.getElementById('lab').value);
     formData.append('reservation_date', document.getElementById('reservationDate').value);
     formData.append('reservation_time', startTime);
@@ -495,10 +920,143 @@ updateNotifState();
           showMessage('error', data.message || 'Reservation failed.');
           return;
         }
+
         showMessage('success', data.message || 'Reservation submitted.');
+
         setTimeout(() => window.location.reload(), 900);
       })
       .catch(() => showMessage('error', 'Something went wrong while saving reservation.'));
+  }
+
+  function showAppModal(type, title, message, callback = null) {
+    const modalEl = document.getElementById('appMessageModal');
+    const iconBox = document.getElementById('appMessageIcon');
+    const icon = iconBox.querySelector('i');
+    const titleEl = document.getElementById('appMessageTitle');
+    const textEl = document.getElementById('appMessageText');
+
+    iconBox.className = 'mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle';
+
+    if (type === 'success') {
+      iconBox.classList.add('bg-success-subtle', 'text-success');
+      icon.className = 'bi bi-check-circle fs-1';
+    } else if (type === 'error') {
+      iconBox.classList.add('bg-danger-subtle', 'text-danger');
+      icon.className = 'bi bi-x-circle fs-1';
+    } else if (type === 'warning') {
+      iconBox.classList.add('bg-warning-subtle', 'text-warning');
+      icon.className = 'bi bi-exclamation-triangle fs-1';
+    } else {
+      iconBox.classList.add('bg-primary-subtle', 'text-primary');
+      icon.className = 'bi bi-info-circle fs-1';
+    }
+
+    titleEl.textContent = title;
+    textEl.textContent = message;
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    if (callback) {
+      modalEl.addEventListener('hidden.bs.modal', callback, { once: true });
+    }
+  }
+
+  function showConfirmModal(title, message, confirmText = 'Yes, Continue') {
+    return new Promise((resolve) => {
+      const modalEl = document.getElementById('appConfirmModal');
+      const titleEl = document.getElementById('appConfirmTitle');
+      const textEl = document.getElementById('appConfirmText');
+      const yesBtn = document.getElementById('appConfirmYesBtn');
+
+      titleEl.textContent = title;
+      textEl.textContent = message;
+      yesBtn.textContent = confirmText;
+
+      const modal = new bootstrap.Modal(modalEl);
+
+      let resolved = false;
+
+      const yesHandler = () => {
+        resolved = true;
+        yesBtn.removeEventListener('click', yesHandler);
+        modal.hide();
+        resolve(true);
+      };
+
+      const hiddenHandler = () => {
+        yesBtn.removeEventListener('click', yesHandler);
+        modalEl.removeEventListener('hidden.bs.modal', hiddenHandler);
+
+        if (!resolved) {
+          resolve(false);
+        }
+      };
+
+      yesBtn.addEventListener('click', yesHandler);
+      modalEl.addEventListener('hidden.bs.modal', hiddenHandler, { once: true });
+
+      modal.show();
+    });
+  }
+
+  async function toggleReservation(reservationId, action) {
+    let confirmTitle = '';
+    let confirmMessage = '';
+    let confirmButton = '';
+
+    if (action === 'disable') {
+      confirmTitle = 'Disable Reservation?';
+      confirmMessage = 'This will cancel your selected reservation. You can enable it again later if the slot is still available.';
+      confirmButton = 'Yes, Disable';
+    } else {
+      confirmTitle = 'Enable Reservation?';
+      confirmMessage = 'This will return your cancelled reservation to pending status. The admin still needs to approve it again.';
+      confirmButton = 'Yes, Enable';
+    }
+
+    const confirmed = await showConfirmModal(confirmTitle, confirmMessage, confirmButton);
+
+    if (!confirmed) {
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append('reservation_id', reservationId);
+    formData.append('action', action);
+
+    fetch('../controllers/reservation/student_toggle_reservation.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          showAppModal(
+            'error',
+            'Action Failed',
+            data.message || 'Unable to update the reservation.'
+          );
+          return;
+        }
+
+        showAppModal(
+          'success',
+          'Reservation Updated',
+          data.message || 'Reservation updated successfully.',
+          function () {
+            window.location.reload();
+          }
+        );
+      })
+      .catch(() => {
+        showAppModal(
+          'error',
+          'Something Went Wrong',
+          'Unable to update the reservation. Please try again.'
+        );
+      });
   }
 
   loadSeats();

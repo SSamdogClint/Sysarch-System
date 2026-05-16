@@ -167,7 +167,7 @@ $chart_data = [
   <title>UC – Sit-in History</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.30.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/student.css">
 
@@ -630,7 +630,7 @@ $chart_data = [
       </div>
 
       <button type="button" class="dark-toggle" id="darkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode" aria-pressed="false">
-        <i class="ti ti-moon"></i>
+        <i class="bi bi-moon-stars"></i>
         <span>Dark</span>
       </button>
 
@@ -968,18 +968,20 @@ $chart_data = [
     document.body.classList.toggle('dark-mode', enabled);
 
     const btn = document.getElementById('darkModeToggle');
+
     if (btn) {
       btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+
       btn.innerHTML = enabled
-        ? '<i class="ti ti-sun"></i><span>Light</span>'
-        : '<i class="ti ti-moon"></i><span>Dark</span>';
+        ? '<i class="bi bi-sun"></i><span>Light</span>'
+        : '<i class="bi bi-moon-stars"></i><span>Dark</span>';
     }
   }
 
-  function toggleDarkMode() {
-    const enabled = !document.body.classList.contains('dark-mode');
-    localStorage.setItem('uc_dark_mode', enabled ? 'enabled' : 'disabled');
-    applyDarkMode();
+    function toggleDarkMode() {
+      const enabled = !document.body.classList.contains('dark-mode');
+      localStorage.setItem('uc_dark_mode', enabled ? 'enabled' : 'disabled');
+      applyDarkMode();
   }
 
   applyDarkMode();

@@ -1949,3 +1949,194 @@ body.dark-mode .modal-footer {
 body.dark-mode .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
 }
+
+/* ===============================
+   RESERVATION PAGE DARK MODE
+   =============================== */
+
+body.dark-mode.student-reservation-page {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .admin-main {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .reservation-panel {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #2d436d !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark-mode .reservation-panel-header {
+  background: #0b1220 !important;
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #2d436d !important;
+}
+
+body.dark-mode .reservation-panel-header h4,
+body.dark-mode .reservation-panel-header span {
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .reservation-body {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .field label {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .field select,
+body.dark-mode .field input,
+body.dark-mode .field textarea,
+body.dark-mode #lab,
+body.dark-mode #reservationDate,
+body.dark-mode #reservationTime,
+body.dark-mode #reservationEndTime,
+body.dark-mode #purpose {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+}
+
+body.dark-mode .field textarea::placeholder,
+body.dark-mode #purpose::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .lab-wrap {
+  background: #0f172a !important;
+  border: 1px solid #2d436d !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .lab-title,
+body.dark-mode .teacher-area,
+body.dark-mode .door {
+  background: #1e293b !important;
+  color: #e5e7eb !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .pc-seat {
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  box-shadow: none !important;
+}
+
+body.dark-mode .pc-seat.available {
+  background: #064e3b !important;
+  color: #d1fae5 !important;
+}
+
+body.dark-mode .pc-seat.pending {
+  background: #78350f !important;
+  color: #fef3c7 !important;
+}
+
+body.dark-mode .pc-seat.reserved,
+body.dark-mode .pc-seat.approved {
+  background: #7f1d1d !important;
+  color: #fee2e2 !important;
+}
+
+body.dark-mode .pc-seat.unavailable {
+  background: #374151 !important;
+  color: #d1d5db !important;
+}
+
+body.dark-mode .pc-seat.selected {
+  background: #1d4ed8 !important;
+  color: #dbeafe !important;
+  border-color: #93c5fd !important;
+}
+
+body.dark-mode .legend,
+body.dark-mode .legend-item {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .card {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #2d436d !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark-mode .card-header,
+body.dark-mode .card-footer,
+body.dark-mode .bg-white {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  border-color: #2d436d !important;
+}
+
+body.dark-mode .text-muted {
+  color: #a8b3c7 !important;
+}
+
+body.dark-mode .nav-tabs {
+  border-color: #2d436d !important;
+}
+
+body.dark-mode .nav-tabs .nav-link {
+  background: #0f172a !important;
+  color: #cbd5e1 !important;
+  border-color: #2d436d !important;
+}
+
+body.dark-mode .nav-tabs .nav-link.active {
+  background: #1d4ed8 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+body.dark-mode .tab-content {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  border-color: #2d436d !important;
+}
+
+body.dark-mode .table {
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .table th,
+body.dark-mode .table td {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  border-color: #2d436d !important;
+}
+
+body.dark-mode .table-light th {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .alert-info {
+  background: #172554 !important;
+  color: #bfdbfe !important;
+  border-color: #1d4ed8 !important;
+}
+
+body.dark-mode #editModal > div {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #2d436d !important;
+}
+
+body.dark-mode #editModal input {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode #editModal label {
+  color: #cbd5e1 !important;
+}
+
+

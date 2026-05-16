@@ -14,21 +14,28 @@ if (empty($_SESSION['logged_in'])) {
     exit;
 }
 
-$student_id = (int)($_SESSION['student_id'] ?? 0);
+$student_id   = (int)($_SESSION['student_id'] ?? 0);
 $studentid_no = htmlspecialchars($_SESSION['studentid'] ?? '');
-$middlename = htmlspecialchars($_SESSION['middlename'] ?? '');
-$firstname  = htmlspecialchars($_SESSION['firstname'] ?? '');
-$lastname   = htmlspecialchars($_SESSION['lastname'] ?? '');
-$course     = htmlspecialchars($_SESSION['course'] ?? '');
-$yearlvl    = htmlspecialchars($_SESSION['yearlvl'] ?? '');
-$email      = htmlspecialchars($_SESSION['email'] ?? '');
-$addrs      = htmlspecialchars($_SESSION['addrs'] ?? '');
-$initials   = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
+$middlename   = htmlspecialchars($_SESSION['middlename'] ?? '');
+$firstname    = htmlspecialchars($_SESSION['firstname'] ?? '');
+$lastname     = htmlspecialchars($_SESSION['lastname'] ?? '');
+$course       = htmlspecialchars($_SESSION['course'] ?? '');
+$yearlvl      = htmlspecialchars($_SESSION['yearlvl'] ?? '');
+$email        = htmlspecialchars($_SESSION['email'] ?? '');
+$addrs        = htmlspecialchars($_SESSION['addrs'] ?? '');
+$initials     = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
 
 require_once '../controllers/announcements/student_notifications.php';
 
-$message = '';
-$messageType = 'success';
+/*
+  Flash message.
+  This is used because after submitting, we redirect back to testimonials.php.
+  This prevents duplicate submission when refreshing the page.
+*/
+$message = $_SESSION['testimonial_message'] ?? '';
+$messageType = $_SESSION['testimonial_message_type'] ?? 'success';
+
+unset($_SESSION['testimonial_message'], $_SESSION['testimonial_message_type']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rating = (int)($_POST['rating'] ?? 5);
@@ -39,27 +46,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($testimonial === '') {
-        $message = 'Please write your testimonial first.';
-        $messageType = 'danger';
-    } else {
-        $stmt = $conn->prepare("INSERT INTO testimonials (student_id, rating, message, status) VALUES (?, ?, ?, 'approved')");
+        $_SESSION['testimonial_message'] = 'Please write your testimonial first.';
+        $_SESSION['testimonial_message_type'] = 'danger';
 
-        if ($stmt) {
-            $stmt->bind_param('iis', $student_id, $rating, $testimonial);
-            $stmt->execute();
-            $stmt->close();
+        header('Location: testimonials.php');
+        exit;
+    }
 
-            $message = 'Your testimonial was submitted successfully.';
-            $messageType = 'success';
-        } else {
-            $message = 'Unable to submit testimonial. Please check if the testimonials table exists.';
-            $messageType = 'danger';
+    /*
+      Prevent exact duplicate testimonial from the same student.
+      This helps avoid repeated inserts from refresh/back/retry.
+    */
+    $checkStmt = $conn->prepare("
+        SELECT id
+        FROM testimonials
+        WHERE student_id = ?
+          AND message = ?
+        LIMIT 1
+    ");
+
+    if ($checkStmt) {
+        $checkStmt->bind_param('is', $student_id, $testimonial);
+        $checkStmt->execute();
+
+        $existing = $checkStmt->get_result()->fetch_assoc();
+
+        $checkStmt->close();
+
+        if ($existing) {
+            $_SESSION['testimonial_message'] = 'You already submitted the same testimonial.';
+            $_SESSION['testimonial_message_type'] = 'warning';
+
+            header('Location: testimonials.php');
+            exit;
         }
     }
+
+    $stmt = $conn->prepare("
+        INSERT INTO testimonials
+        (student_id, rating, message, status)
+        VALUES (?, ?, ?, 'approved')
+    ");
+
+    if ($stmt) {
+        $stmt->bind_param('iis', $student_id, $rating, $testimonial);
+        $stmt->execute();
+        $stmt->close();
+
+        $_SESSION['testimonial_message'] = 'Your testimonial was submitted successfully.';
+        $_SESSION['testimonial_message_type'] = 'success';
+    } else {
+        $_SESSION['testimonial_message'] = 'Unable to submit testimonial. Please check if the testimonials table exists.';
+        $_SESSION['testimonial_message_type'] = 'danger';
+    }
+
+    /*
+      Important:
+      Redirect after POST so page refresh will not submit again.
+    */
+    header('Location: testimonials.php');
+    exit;
 }
 
 $myTestimonials = [];
-$stmt = $conn->prepare("SELECT rating, message, created_at FROM testimonials WHERE student_id = ? ORDER BY created_at DESC");
+
+$stmt = $conn->prepare("
+    SELECT rating, message, created_at
+    FROM testimonials
+    WHERE student_id = ?
+    ORDER BY created_at DESC
+");
+
 if ($stmt) {
     $stmt->bind_param('i', $student_id);
     $stmt->execute();
@@ -69,11 +126,14 @@ if ($stmt) {
 
 $totalTestimonials = count($myTestimonials);
 $averageRating = 0;
+
 if ($totalTestimonials > 0) {
     $ratingTotal = 0;
+
     foreach ($myTestimonials as $item) {
         $ratingTotal += (int)$item['rating'];
     }
+
     $averageRating = round($ratingTotal / $totalTestimonials, 1);
 }
 ?>
@@ -155,7 +215,10 @@ if ($totalTestimonials > 0) {
       </span>
 
       <div class="nav-divider"></div>
-      <a class="nav-link" href="../controllers/auth/logout.php">Log out</a>
+
+      <a class="nav-link" href="../controllers/auth/logout.php">
+        Log out
+      </a>
     </div>
   </nav>
 
@@ -164,6 +227,7 @@ if ($totalTestimonials > 0) {
 
     <main class="admin-main">
       <div class="container-fluid py-4">
+
         <div class="row align-items-stretch g-3 mb-4">
           <div class="col-lg-8">
             <div class="card border shadow-sm h-100">
@@ -172,9 +236,12 @@ if ($totalTestimonials > 0) {
                   <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center p-3">
                     <i class="bi bi-chat-square-heart fs-3"></i>
                   </div>
+
                   <div>
                     <h1 class="h3 mb-1">Student Testimonials</h1>
-                    <p class="text-muted mb-0">Share your experience using the UC CCS sit-in monitoring system.</p>
+                    <p class="text-muted mb-0">
+                      Share your experience using the UC CCS sit-in monitoring system.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -190,6 +257,7 @@ if ($totalTestimonials > 0) {
                     <h2 class="h5 mb-0"><?= $firstname ?> <?= $lastname ?></h2>
                     <small class="text-muted"><?= $studentid_no ?></small>
                   </div>
+
                   <div class="rounded-circle bg-body-secondary d-inline-flex align-items-center justify-content-center p-3">
                     <strong><?= $initials ?></strong>
                   </div>
@@ -201,7 +269,7 @@ if ($totalTestimonials > 0) {
 
         <?php if ($message): ?>
           <div class="alert alert-<?= htmlspecialchars($messageType) ?> alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi <?= $messageType === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle' ?> me-2"></i>
+            <i class="bi <?= $messageType === 'success' ? 'bi-check-circle' : ($messageType === 'warning' ? 'bi-exclamation-circle' : 'bi-exclamation-triangle') ?> me-2"></i>
             <?= htmlspecialchars($message) ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
@@ -221,7 +289,7 @@ if ($totalTestimonials > 0) {
               </div>
 
               <div class="card-body p-4">
-                <form method="POST">
+                <form method="POST" id="testimonialForm">
                   <div class="mb-3">
                     <label class="form-label fw-semibold">Rating</label>
                     <select class="form-select" name="rating" required>
@@ -235,7 +303,12 @@ if ($totalTestimonials > 0) {
 
                   <div class="mb-3">
                     <label class="form-label fw-semibold">Message</label>
-                    <textarea class="form-control" name="message" rows="7" placeholder="Example: The system helped me reserve a laboratory PC easily and monitor my remaining sessions." required></textarea>
+                    <textarea
+                      class="form-control"
+                      name="message"
+                      rows="7"
+                      placeholder="Example: The system helped me reserve a laboratory PC easily and monitor my remaining sessions."
+                      required></textarea>
                   </div>
 
                   <div class="alert alert-info mb-3">
@@ -243,7 +316,7 @@ if ($totalTestimonials > 0) {
                     Your testimonial will be saved immediately.
                   </div>
 
-                  <button class="btn btn-primary w-100 py-2" type="submit">
+                  <button class="btn btn-primary w-100 py-2" type="submit" id="submitTestimonialBtn">
                     <i class="bi bi-send me-1"></i>
                     Submit Testimonial
                   </button>
@@ -265,8 +338,13 @@ if ($totalTestimonials > 0) {
                   </div>
 
                   <div class="d-flex flex-wrap gap-2">
-                    <span class="badge text-bg-primary rounded-pill"><?= $totalTestimonials ?> submitted</span>
-                    <span class="badge text-bg-warning rounded-pill"><?= $averageRating ?: '0' ?> avg rating</span>
+                    <span class="badge text-bg-primary rounded-pill">
+                      <?= $totalTestimonials ?> submitted
+                    </span>
+
+                    <span class="badge text-bg-warning rounded-pill">
+                      <?= $averageRating ?: '0' ?> avg rating
+                    </span>
                   </div>
                 </div>
               </div>
@@ -276,7 +354,9 @@ if ($totalTestimonials > 0) {
                   <div class="text-center py-5">
                     <i class="bi bi-chat-square-text display-5 text-muted"></i>
                     <h3 class="h5 mt-3">No testimonials yet</h3>
-                    <p class="text-muted mb-0">Submit your first testimonial using the form.</p>
+                    <p class="text-muted mb-0">
+                      Submit your first testimonial using the form.
+                    </p>
                   </div>
                 <?php else: ?>
                   <div class="list-group list-group-flush">
@@ -288,13 +368,16 @@ if ($totalTestimonials > 0) {
                               <i class="bi <?= $i <= (int)$item['rating'] ? 'bi-star-fill text-warning' : 'bi-star text-muted' ?>"></i>
                             <?php endfor; ?>
                           </div>
+
                           <small class="text-muted">
                             <i class="bi bi-calendar-event me-1"></i>
                             <?= htmlspecialchars($item['created_at']) ?>
                           </small>
                         </div>
 
-                        <p class="mb-0"><?= nl2br(htmlspecialchars($item['message'])) ?></p>
+                        <p class="mb-0">
+                          <?= nl2br(htmlspecialchars($item['message'])) ?>
+                        </p>
                       </div>
                     <?php endforeach; ?>
                   </div>
@@ -303,68 +386,118 @@ if ($totalTestimonials > 0) {
             </div>
           </div>
         </div>
+
       </div>
     </main>
   </div>
 
-  <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title">Edit Profile</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form action="../controllers/student/update_profile.php" method="POST">
-          <div class="modal-body">
-            <input type="hidden" name="student_id" value="<?= (int)$student_id ?>">
-            <input type="hidden" name="studentid" value="<?= $studentid_no ?>">
-            <input type="hidden" name="middlename" value="<?= $middlename ?>">
+  <div id="editModal" style="
+    display:none; position:fixed; inset:0; z-index:9998;
+    background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
 
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">First Name</label>
-                <input type="text" name="firstname" value="<?= $firstname ?>" class="form-control">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Last Name</label>
-                <input type="text" name="lastname" value="<?= $lastname ?>" class="form-control">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Course</label>
-                <input type="text" name="course" value="<?= $course ?>" class="form-control">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Year Level</label>
-                <input type="text" name="yearlvl" value="<?= $yearlvl ?>" class="form-control">
-              </div>
-              <div class="col-12">
-                <label class="form-label">Email</label>
-                <input type="email" name="email" value="<?= $email ?>" class="form-control">
-              </div>
-              <div class="col-12">
-                <label class="form-label">Address</label>
-                <input type="text" name="addrs" value="<?= $addrs ?>" class="form-control">
-              </div>
-            </div>
+    <div style="
+      background:#fff; border-radius:16px; width:100%; max-width:540px;
+      max-height:90vh; overflow-y:auto; margin:1rem;
+      box-shadow:0 20px 60px rgba(0,0,0,0.2);
+      font-family:'Poppins',sans-serif; overflow:hidden;">
+
+      <div style="
+        background:#1d3a6e; color:#fff; padding:16px 24px;
+        display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:14px; font-weight:600;">Edit Profile</span>
+
+        <button type="button" onclick="closeModal()" style="
+          background:transparent; border:none; color:#fff;
+          font-size:20px; cursor:pointer; line-height:1;">✕</button>
+      </div>
+
+      <div style="padding:24px;">
+        <form action="../controllers/student/update_profile.php" method="POST">
+          <input type="hidden" name="student_id" value="<?= (int)$student_id ?>">
+          <input type="hidden" name="studentid" value="<?= $studentid_no ?>">
+          <input type="hidden" name="middlename" value="<?= $middlename ?>">
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
+            <input type="text" name="firstname" value="<?= $firstname ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Last Name</label>
+            <input type="text" name="lastname" value="<?= $lastname ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
           </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Course</label>
+            <input type="text" name="course" value="<?= $course ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Year Level</label>
+            <input type="text" name="yearlvl" value="<?= $yearlvl ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Email</label>
+            <input type="email" name="email" value="<?= $email ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Address</label>
+            <input type="text" name="addrs" value="<?= $addrs ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button type="button" onclick="closeModal()" style="
+              padding:9px 20px; border:1px solid #d1d5db; border-radius:8px;
+              background:#fff; font-size:13px; font-weight:500;
+              font-family:'Poppins',sans-serif; cursor:pointer; color:#374151;">
+              Cancel
+            </button>
+
+            <button type="submit" style="
+              padding:9px 24px; background:#1d3a6e; color:#fff;
+              border:none; border-radius:8px; font-size:13px; font-weight:600;
+              font-family:'Poppins',sans-serif; cursor:pointer;">
+              Save Changes
+            </button>
+          </div>
+
         </form>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
     function applyDarkMode() {
       const enabled = localStorage.getItem('uc_dark_mode') === 'enabled';
       document.body.classList.toggle('dark-mode', enabled);
 
       const btn = document.getElementById('darkModeToggle');
+
       if (btn) {
         btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+
         btn.innerHTML = enabled
           ? '<i class="bi bi-sun"></i><span>Light</span>'
           : '<i class="bi bi-moon-stars"></i><span>Dark</span>';
@@ -379,19 +512,57 @@ if ($totalTestimonials > 0) {
 
     applyDarkMode();
 
+    const testimonialForm = document.getElementById('testimonialForm');
+    const submitTestimonialBtn = document.getElementById('submitTestimonialBtn');
+
+    if (testimonialForm && submitTestimonialBtn) {
+      testimonialForm.addEventListener('submit', function () {
+        submitTestimonialBtn.disabled = true;
+        submitTestimonialBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting...';
+      });
+    }
+
     const navToggler = document.getElementById('navToggler');
+
     if (navToggler) {
       navToggler.addEventListener('click', () => {
         const navLinks = document.getElementById('navLinks');
         const sidebar = document.getElementById('sidebar');
-        if (navLinks) navLinks.classList.toggle('open');
-        if (sidebar) sidebar.classList.toggle('open');
+
+        if (navLinks) {
+          navLinks.classList.toggle('open');
+        }
+
+        if (sidebar) {
+          sidebar.classList.toggle('open');
+        }
       });
     }
 
     function openModal() {
-      const modal = new bootstrap.Modal(document.getElementById('editModal'));
-      modal.show();
+      const modal = document.getElementById('editModal');
+
+      if (modal) {
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('editModal');
+
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    const editModal = document.getElementById('editModal');
+
+    if (editModal) {
+      editModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeModal();
+        }
+      });
     }
 
     const notifications = <?= json_encode($notifications, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
@@ -408,6 +579,7 @@ if ($totalTestimonials > 0) {
 
     function updateNotifState() {
       if (!notifDot || !notifBellBtn) return;
+
       const lastSeen = parseInt(localStorage.getItem(notifStorageKey) || '0', 10);
       const latest = getLatestNotifTime();
 
