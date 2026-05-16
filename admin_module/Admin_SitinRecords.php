@@ -16,16 +16,44 @@ require_once '../config/db_config.php';
 
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
 
+function adminSitinHasColumn(mysqli $conn, string $column): bool {
+    $sql = "
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'sitin_records'
+          AND COLUMN_NAME = ?
+    ";
+
+    $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        return false;
+    }
+
+    $stmt->bind_param('s', $column);
+    $stmt->execute();
+
+    $count = 0;
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    return (int)$count > 0;
+}
+
+$pcSelect = adminSitinHasColumn($conn, 'pc_number') ? 'pc_number' : 'NULL AS pc_number';
+
 // Fetch active sit-in records
 $result_active = $conn->query(
-    "SELECT id, studentid, fullname, purpose, lab, session_at_sitin, login_time, status
+    "SELECT id, studentid, fullname, purpose, lab, $pcSelect, session_at_sitin, login_time, status
      FROM sitin_records WHERE status = 'active' ORDER BY login_time DESC"
 );
 $active_records = $result_active->fetch_all(MYSQLI_ASSOC);
 
 // Fetch done sit-in records
 $result_done = $conn->query(
-    "SELECT id, studentid, fullname, purpose, lab, session_at_sitin, login_time, status
+    "SELECT id, studentid, fullname, purpose, lab, $pcSelect, session_at_sitin, login_time, status
      FROM sitin_records WHERE status = 'done' ORDER BY login_time DESC"
 );
 $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
@@ -69,45 +97,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
   <div class="admin-layout">
 
     <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-section" style="margin-top:0;">Main</div>
-      <a class="sidebar-link" href="admin_dashboard.php">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Dashboard
-      </a>
-      <a class="sidebar-link" href="#" onclick="openSearchModal(); return false;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Search
-      </a>
-      <a class="sidebar-link" href="Admin_StudentList.php">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Students
-      </a>
-      <a class="sidebar-link" href="#" onclick="openSitinModal(); return false;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2"/></svg>
-        Sit-in
-      </a>
-      <a class="sidebar-link active" href="Admin_SitinRecords.php">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Sit-in Records
-      </a>
-      <a class="sidebar-link" href="Admin_Reservation.php">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Reservation
-      </a>
-
-      <hr class="sidebar-divider">
-      
-      <div class="sidebar-section">Reports</div>
-      <a class="sidebar-link" href="#">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Sit-in Reports
-      </a>
-      <a class="sidebar-link" href="#">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Feedback Reports
-      </a>
-    </aside>
+    <?php require __DIR__ . '/../includes/admin_sidebar.php'; ?>
 
     <!-- MAIN -->
     <main class="admin-main">
@@ -162,6 +152,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
                   <th>Full Name</th>
                   <th>Purpose</th>
                   <th>Lab</th>
+                  <th>PC No.</th>
                   <th>Session</th>
                   <th>Date & Time</th>
                   <th>Status</th>
@@ -205,6 +196,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
                   <th>Full Name</th>
                   <th>Purpose</th>
                   <th>Lab</th>
+                  <th>PC No.</th>
                   <th>Session</th>
                   <th>Date & Time</th>
                   <th>Status</th>
@@ -376,6 +368,10 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
               <option value="Lab 6">Lab 544</option>
             </select>
           </div>
+          <div style="margin-bottom:20px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">PC Number (optional)</label>
+            <input type="number" id="sitinPcNumber" min="1" placeholder="Example: 12" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 13px;font-size:13px;font-family:'Poppins',sans-serif;outline:none;color:#111827;">
+          </div>
           <div id="sitinSubmitError" style="display:none;margin-bottom:10px;font-size:12px;color:#b91c1c;"></div>
           <div style="display:flex;gap:10px;justify-content:flex-end;">
             <button onclick="closeSitinModal()" style="padding:9px 20px;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-size:13px;font-weight:500;font-family:'Poppins',sans-serif;cursor:pointer;color:#374151;">Cancel</button>
@@ -452,7 +448,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
 
       tbody.innerHTML = '';
       if (data.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No active sit-ins found.</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No active sit-ins found.</td></tr>';
       } else {
         data.forEach(r => {
           tbody.innerHTML += `
@@ -462,6 +458,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
               <td>${r.fullname}</td>
               <td>${r.purpose}</td>
               <td>${r.lab}</td>
+              <td>${r.pc_number ? 'PC ' + r.pc_number : '—'}</td>
               <td><span class="badge-session">${r.session_at_sitin}</span></td>
               <td style="font-size:12px;color:#6b7280;">${formatDate(r.login_time)}</td>
               <td><span class="badge-status active">active</span></td>
@@ -503,7 +500,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
 
       tbody.innerHTML = '';
       if (data.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No history records found.</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No history records found.</td></tr>';
       } else {
         data.forEach(r => {
           tbody.innerHTML += `
@@ -513,6 +510,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
               <td>${r.fullname}</td>
               <td>${r.purpose}</td>
               <td>${r.lab}</td>
+              <td>${r.pc_number ? 'PC ' + r.pc_number : '—'}</td>
               <td><span class="badge-session">${r.session_at_sitin}</span></td>
               <td style="font-size:12px;color:#6b7280;">${formatDate(r.login_time)}</td>
               <td><span class="badge-status done">done</span></td>
@@ -698,6 +696,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       document.getElementById('sitinIdInput').value = '';
       document.getElementById('sitinPurpose').value = '';
       document.getElementById('sitinLab').value = '';
+      if (document.getElementById('sitinPcNumber')) document.getElementById('sitinPcNumber').value = '';
       document.getElementById('sitinStudentInfo').style.display = 'none';
       document.getElementById('sitinFormFields').style.display = 'none';
       document.getElementById('sitinLookupError').style.display = 'none';
@@ -733,12 +732,14 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
     function submitSitin() {
       const purpose = document.getElementById('sitinPurpose').value.trim();
       const lab     = document.getElementById('sitinLab').value;
+      const pcNumber = document.getElementById('sitinPcNumber') ? document.getElementById('sitinPcNumber').value.trim() : '';
       if (!purpose) { showSitinError('sitinSubmitError', 'Please enter the purpose.'); return; }
       if (!lab)     { showSitinError('sitinSubmitError', 'Please select a lab.'); return; }
       const formData = new FormData();
       formData.append('studentid', currentStudent.studentid);
       formData.append('purpose',   purpose);
       formData.append('lab',       lab);
+      formData.append('pc_number', pcNumber);
       fetch('../controllers/sitin/register_sitin.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
@@ -751,6 +752,15 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
     }
     function showSitinError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.style.display = 'block'; }
     document.getElementById('sitinModal').addEventListener('click', function(e) { if (e.target === this) closeSitinModal(); });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('open') === 'sitin' && typeof openSitinModal === 'function') {
+        openSitinModal();
+      }
+    });
+    
   </script>
 </body>
 </html>

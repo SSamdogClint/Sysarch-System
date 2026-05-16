@@ -3,6 +3,7 @@
 
 session_start();
 require_once '../../config/db_config.php';
+require_once '../notifications/notification_helpers.php';
 
 header('Content-Type: application/json');
 
@@ -147,6 +148,17 @@ $stmt = $conn->prepare("
 $stmt->bind_param('issssisss', $student_id, $studentid, $fullname, $purpose, $lab, $pc, $date, $time, $end_time);
 
 if ($stmt->execute()) {
+    $dateLabel = date('M d, Y', strtotime($date));
+    $timeLabel = date('h:i A', strtotime($time));
+
+    createStudentNotification(
+        $conn,
+        $student_id,
+        'reservation_submitted',
+        'Reservation Submitted',
+        'Your reservation request for ' . $lab . ' PC ' . $pc . ' on ' . $dateLabel . ' at ' . $timeLabel . ' was submitted and is waiting for admin approval.'
+    );
+
     echo json_encode(['success' => true, 'message' => 'Reservation submitted. Please wait for admin approval.']);
 } else {
     echo json_encode(['success' => false, 'message' => 'Failed to save reservation: ' . $stmt->error]);

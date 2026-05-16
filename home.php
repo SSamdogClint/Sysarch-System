@@ -239,7 +239,7 @@ $lastname  = htmlspecialchars($_SESSION['lastname']  ?? '');
           <div class="nav-user-avatar"><?= strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1)) ?></div>
           <?= $firstname . ' ' . $lastname ?>
         </div>
-        <a class="nav-link" href="logout.php">Log out</a>
+        <a class="nav-link" href="controllers/auth/logout.php">Log out</a>
       <?php else: ?>
         <a class="nav-link" href="login_page.php">Sign in</a>
         <a class="nav-cta"  href="register_page.php">Sign up</a>
@@ -267,8 +267,8 @@ $lastname  = htmlspecialchars($_SESSION['lastname']  ?? '');
 
       <div class="hero-btns">
         <?php if ($loggedIn): ?>
-          <a href="dashboard.php" class="btn-hero-primary">Go to Dashboard</a>
-          <a href="logout.php"    class="btn-hero-outline">Log out</a>
+          <a href="student_module/student_dashboard.php" class="btn-hero-primary">Go to Dashboard</a>
+          <a href="controllers/auth/logout.php"    class="btn-hero-outline">Log out</a>
         <?php else: ?>
           <a href="login_page.php"    class="btn-hero-primary">Sign in</a>
           <a href="register_page.php" class="btn-hero-outline">Create account</a>

@@ -121,6 +121,10 @@ function getReservation(mysqli $conn, int $id): ?array
     $stmt = $conn->prepare("
         SELECT 
             id,
+            student_id,
+            studentid,
+            fullname,
+            purpose,
             lab,
             reservation_date,
             reservation_time,
@@ -185,6 +189,14 @@ function checkApprovalConflict(mysqli $conn, int $id): void
 
 function updateReservationStatus(mysqli $conn, int $id, string $newStatus): void
 {
+    $reservation = getReservation($conn, $id);
+
+    if (!$reservation) {
+        jsonResponse(false, 'Reservation not found.');
+    }
+
+    $oldStatus = $reservation['status'];
+
     $stmt = $conn->prepare("
         UPDATE lab_reservations
         SET status = ?
@@ -194,6 +206,10 @@ function updateReservationStatus(mysqli $conn, int $id, string $newStatus): void
     $ok = $stmt->execute();
     $stmt->close();
 
+    if ($ok && $oldStatus !== $newStatus) {
+        createReservationStatusNotification($conn, $reservation, $newStatus);
+    }
+
     $messages = [
         'approved'  => 'Reservation approved.',
         'rejected'  => 'Reservation rejected.',
@@ -202,4 +218,52 @@ function updateReservationStatus(mysqli $conn, int $id, string $newStatus): void
     ];
 
     jsonResponse($ok, $ok ? ($messages[$newStatus] ?? 'Reservation updated.') : 'Failed to update reservation.');
+}
+
+function createReservationStatusNotification(mysqli $conn, array $reservation, string $newStatus): void
+{
+    $studentId = (int)($reservation['student_id'] ?? 0);
+
+    if ($studentId <= 0) {
+        return;
+    }
+
+    $lab = $reservation['lab'] ?? 'selected lab';
+    $pc = 'PC ' . (int)($reservation['pc_number'] ?? 0);
+    $dateLabel = !empty($reservation['reservation_date']) ? date('M d, Y', strtotime($reservation['reservation_date'])) : 'your selected date';
+    $timeLabel = !empty($reservation['reservation_time']) ? date('h:i A', strtotime($reservation['reservation_time'])) : 'your selected time';
+
+    $details = $lab . ' ' . $pc . ' on ' . $dateLabel . ' at ' . $timeLabel;
+
+    if ($newStatus === 'approved') {
+        createStudentNotification(
+            $conn,
+            $studentId,
+            'reservation_approved',
+            'Reservation Approved',
+            'Your reservation for ' . $details . ' has been approved. Please arrive on time. Reservations may be cancelled if you are more than 15 minutes late.'
+        );
+        return;
+    }
+
+    if ($newStatus === 'rejected') {
+        createStudentNotification(
+            $conn,
+            $studentId,
+            'reservation_rejected',
+            'Reservation Rejected',
+            'Your reservation request for ' . $details . ' has been rejected by the admin.'
+        );
+        return;
+    }
+
+    if ($newStatus === 'cancelled') {
+        createStudentNotification(
+            $conn,
+            $studentId,
+            'reservation_cancelled',
+            'Reservation Cancelled',
+            'Your reservation for ' . $details . ' has been cancelled by the admin.'
+        );
+    }
 }

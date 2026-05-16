@@ -1,6 +1,24 @@
 # UC Sit-in System
+
 **University of Cebu — College of Computer Studies**
-> A web-based sit-in monitoring system for CCS students and administrators.
+
+A web-based sit-in monitoring system for CCS students and administrators.
+
+---
+
+## Fixed Notes
+
+This copy includes fixes for:
+
+- Broken `home.php` links for logout and dashboard.
+- Database name mismatch: the project now consistently uses `sitin`.
+- Duplicate `reservation_end_time` SQL issue removed.
+- `logout_time` is now included directly in the `sitin_records` table.
+- Reservation auto-cancel grace period fixed from 1 minute to 15 minutes.
+- Student profile update is safer: students can only update their own account.
+- Feedback submission is safer: students can only submit feedback for their own sit-in record.
+- Login session now includes `middlename`.
+- Admin sit-in registration no longer silently closes active sessions.
 
 ---
 
@@ -8,345 +26,222 @@
 
 ### Step 1: Install XAMPP
 
-1. Download XAMPP from https://www.apachefriends.org/
-2. Install XAMPP to the default location
-3. Open XAMPP Control Panel
-4. Click **Start** on both **Apache** and **MySQL**
+1. Install XAMPP.
+2. Open XAMPP Control Panel.
+3. Start **Apache** and **MySQL**.
 
 ---
 
-### Step 2: Setup Project Files
+### Step 2: Copy Project Folder
 
-1. Download or clone this repository
-2. Copy the `Sysarch-System` folder to XAMPP's htdocs directory:
+Copy the `Sysarch-System` folder to:
 
-| OS | Path |
-|---|---|
-| Windows | `C:\xampp\htdocs\` |
-| macOS | `/Applications/XAMPP/htdocs/` |
-| Linux | `/opt/lampp/htdocs/` |
-
-3. Make sure the folder structure looks like this:
-(note: in my case this not the final folder structure yet)
-
+```text
+C:\xampp\htdocs\
 ```
-Sysarch-System/
-├── admin_module/
-│   ├── admin_dashboard.php
-│   └── Admin_StudentList.php
-├── assets/
-│   ├── css/
-│   │   └── style.css
-│   └── images/
-│       ├── ccsmainlog_nobg.png
-│       └── uclogo_nobg.png
-├── config/
-│   └── db_config.php
-├── includes/
-│   ├── check_session.php
-│   ├── delete_student.php
-│   ├── register_sitin.php
-│   ├── reset_sessions.php
-│   └── search_student.php
-├── student_module/
-│   └── student_dashboard.php
-├── home.php
-├── login_page.php
-├── login_handler.php
-├── register_page.php
-├── register_handler.php
-├── logout.php
-└── update_profile.php
+
+Your path should look like this:
+
+```text
+C:\xampp\htdocs\Sysarch-System\
 ```
 
 ---
 
-### Step 3: Create the Database
+### Step 3: Import / Update Database
 
-1. Open phpMyAdmin: http://localhost/phpmyadmin
-2. Click **New** in the left sidebar
-3. Set the database name to `sitin`
-4. Set collation to `utf8mb4_general_ci`
-5. Click **Create**
+1. Open phpMyAdmin:
+
+```text
+http://localhost/phpmyadmin
+```
+
+2. Click your `sitin` database, then open the **SQL** tab.
+3. Open this file from the project folder:
+
+```text
+database/sitin_all_in_one.sql
+```
+
+4. Copy all SQL contents, paste them in phpMyAdmin, then click **Go**.
+
+This one combined SQL file creates missing tables and adds missing columns without deleting your existing records.
+
+For a completely fresh database only, you may also import:
+
+```text
+database/sitin.sql
+```
+
+Reminder: `database/sitin.sql` drops and recreates the tables, so use `sitin_all_in_one.sql` if you want to keep your current data.
 
 ---
 
-### Step 4: Create the Database Tables
+## Manual Database SQL
 
-1. Select the `sitin` database from the left sidebar
-2. Click the **SQL** tab
-3. Paste the following query and click **Go**:
+If you want to paste the SQL manually, use this combined SQL file:
 
-```sql
-USE sitin;
-
--- Students table
-CREATE TABLE students (
-  id              INT AUTO_INCREMENT PRIMARY KEY,
-  studentid       VARCHAR(20)  NOT NULL UNIQUE,
-  lastname        VARCHAR(50)  NOT NULL,
-  firstname       VARCHAR(50)  NOT NULL,
-  middlename      VARCHAR(50)  DEFAULT '',
-  course          VARCHAR(30)  NOT NULL,
-  yearlvl         TINYINT      NOT NULL DEFAULT 1,
-  email           VARCHAR(100) NOT NULL UNIQUE,
-  password        VARCHAR(255) NOT NULL,
-  addrs           VARCHAR(150) DEFAULT '',
-  created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  session_credits INT          NOT NULL DEFAULT 30
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- accouncements table
-CREATE TABLE announcements (
-  id         INT AUTO_INCREMENT PRIMARY KEY,
-  title      VARCHAR(255) NOT NULL,
-  message    TEXT NOT NULL,
-  posted_by  VARCHAR(100) DEFAULT 'Administrator',
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Sit-in records table
-CREATE TABLE sitin_records (
-  id               INT AUTO_INCREMENT PRIMARY KEY,
-  student_id       INT NOT NULL,
-  studentid        VARCHAR(20) NOT NULL,
-  fullname         VARCHAR(150) NOT NULL,
-  purpose          VARCHAR(100) NOT NULL,
-  lab              VARCHAR(50) NOT NULL,
-  login_time       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  status           VARCHAR(20) DEFAULT 'active',
-  session_at_sitin INT NOT NULL DEFAULT 0,
-
-  INDEX idx_student_id (student_id),
-
-  CONSTRAINT fk_sitin_student
-    FOREIGN KEY (student_id)
-    REFERENCES students(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- create feedback table
-CREATE TABLE feedback (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  sitin_id      INT NOT NULL,
-  student_id    INT NOT NULL,
-  issue_type    VARCHAR(100) DEFAULT NULL,
-  feedback_text TEXT NOT NULL,
-  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  UNIQUE KEY unique_sitin_feedback (sitin_id),
-  INDEX idx_feedback_student (student_id),
-
-  CONSTRAINT fk_feedback_sitin
-    FOREIGN KEY (sitin_id)
-    REFERENCES sitin_records(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_feedback_student
-    FOREIGN KEY (student_id)
-    REFERENCES students(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- UC Sit-in System Reservation Tables
--- Run this inside your Sitin database.
--- Updated version: includes reservation_end_time.
-
-CREATE TABLE IF NOT EXISTS lab_reservations (
-  id                    INT AUTO_INCREMENT PRIMARY KEY,
-  student_id            INT NOT NULL,
-  studentid             VARCHAR(20) NOT NULL,
-  fullname              VARCHAR(120) NOT NULL,
-  purpose               VARCHAR(150) NOT NULL,
-  lab                   VARCHAR(50) NOT NULL,
-  pc_number             INT NOT NULL,
-  reservation_date      DATE NOT NULL,
-  reservation_time      TIME NOT NULL,
-  reservation_end_time  TIME NOT NULL,
-  status                ENUM('pending','approved','rejected','cancelled','done') NOT NULL DEFAULT 'pending',
-  created_at            DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at            DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-  INDEX idx_lab_slot (lab, reservation_date, reservation_time, reservation_end_time, pc_number),
-  INDEX idx_student_slot (student_id, reservation_date, reservation_time, reservation_end_time),
-  INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Optional table for PCs that are unavailable/under maintenance.
--- If you do not insert anything here, all PCs start as available.
-CREATE TABLE IF NOT EXISTS lab_pc_status (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  lab         VARCHAR(50) NOT NULL,
-  pc_number   INT NOT NULL,
-  status      ENUM('available','unavailable') NOT NULL DEFAULT 'available',
-  note        VARCHAR(150) DEFAULT NULL,
-  updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-  UNIQUE KEY uq_lab_pc (lab, pc_number)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Sample unavailable PCs. You may delete/change these.
--- INSERT INTO lab_pc_status (lab, pc_number, status, note) VALUES
--- ('Lab 524', 3, 'unavailable', 'For repair'),
--- ('Lab 524', 18, 'unavailable', 'No keyboard'),
--- ('Lab 526', 11, 'unavailable', 'Maintenance')
--- ON DUPLICATE KEY UPDATE status = VALUES(status), note = VALUES(note);
-
--- Run this ONCE if you already imported the old reservation_tables.sql.
--- It adds the end-time column needed for Current Requests vs Reservation History.
-
-ALTER TABLE lab_reservations
-  ADD COLUMN reservation_end_time TIME NULL AFTER reservation_time;
-
-UPDATE lab_reservations
-SET reservation_end_time = ADDTIME(reservation_time, '01:00:00')
-WHERE reservation_end_time IS NULL;
-
-ALTER TABLE lab_reservations
-  MODIFY reservation_end_time TIME NOT NULL;
-
-ALTER TABLE sitin_records
-ADD COLUMN logout_time DATETIME NULL AFTER login_time;
-
+```text
+database/sitin_all_in_one.sql
 ```
 
 ---
 
-### Step 5: Configure Database Connection
+## Database Connection
 
-Open `config/db_config.php` and make sure it matches your XAMPP setup:
+Open:
+
+```text
+config/db_config.php
+```
+
+Make sure it matches your XAMPP setup:
 
 ```php
 <?php
+// config/db_config.php
+
 define('ROOT_PATH', dirname(__DIR__, 1));
 
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
-define('DB_PASS', '');        // Leave empty if no password set
-define('DB_NAME', 'sitin');   // Must match the database you created
+define('DB_PASS', '');
+define('DB_NAME', 'sitin');
 
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 if ($conn->connect_error) {
     die('Connection failed: ' . $conn->connect_error);
 }
+
 $conn->set_charset('utf8mb4');
 ```
 
 ---
 
-### Step 6: Access the System
+## Access the System
 
-Open your browser and go to:
+Home page:
 
-```
+```text
 http://localhost/Sysarch-System/home.php
+```
+
+Login page:
+
+```text
+http://localhost/Sysarch-System/login_page.php
+```
+
+Register page:
+
+```text
+http://localhost/Sysarch-System/register_page.php
+```
+
+Student dashboard:
+
+```text
+http://localhost/Sysarch-System/student_module/student_dashboard.php
+```
+
+Admin dashboard:
+
+```text
+http://localhost/Sysarch-System/admin_module/admin_dashboard.php
 ```
 
 ---
 
-## 🔐 Default Login Credentials
-
-### Administrator *(hardcoded for now)*
+## Default Admin Login
 
 | Field | Value |
 |---|---|
 | Username | `admin` |
 | Password | `admin123` |
 
-### Student
-
-> Register a new student account at:
-> `http://localhost/Sysarch-System/register_page.php`
+For real deployment, move admin accounts to a database table and use hashed passwords.
 
 ---
 
-## 📁 Pages
+## Main Folder Structure
 
-| Page | URL |
-|---|---|
-| Home | `http://localhost/Sysarch-System/home.php` |
-| Login | `http://localhost/Sysarch-System/login_page.php` |
-| Register | `http://localhost/Sysarch-System/register_page.php` |
-| Student Dashboard | `http://localhost/Sysarch-System/student_module/student_dashboard.php` |
-| Admin Dashboard | `http://localhost/Sysarch-System/admin_module/admin_dashboard.php` |
-| Admin Student List | `http://localhost/Sysarch-System/admin_module/Admin_StudentList.php` |
-
----
-
-## 🗄️ Database Schema
-
-### Table: `students`
-
-| Column | Type | Description |
-|---|---|---|
-| `id` | INT | Auto-increment primary key |
-| `studentid` | VARCHAR(20) | Unique student ID number |
-| `lastname` | VARCHAR(50) | Last name |
-| `firstname` | VARCHAR(50) | First name |
-| `middlename` | VARCHAR(50) | Middle name (optional) |
-| `course` | VARCHAR(30) | Course (e.g. BSIT, BSCS) |
-| `yearlvl` | TINYINT | Year level (1–4) |
-| `email` | VARCHAR(100) | Unique email address |
-| `password` | VARCHAR(255) | Hashed password (bcrypt) |
-| `addrs` | VARCHAR(150) | Home address |
-| `created_at` | TIMESTAMP | Date registered |
-| `session_credits` | INT | Remaining sit-in credits (default: 30) |
-
-### Table: `sitin_records`
-
-| Column | Type | Description |
-|---|---|---|
-| `id` | INT | Auto-increment primary key |
-| `student_id` | INT | Foreign key → `students.id` |
-| `studentid` | VARCHAR(20) | Student ID (for easy display) |
-| `fullname` | VARCHAR(150) | Full name (for easy display) |
-| `purpose` | VARCHAR(100) | Purpose of sit-in session |
-| `lab` | VARCHAR(50) | Lab number used |
-| `login_time` | TIMESTAMP | Date and time of sit-in |
-| `status` | VARCHAR(20) | `active` or `done` |
-
-### Relationship
-
-```
-students                   sitin_records
-────────────────           ─────────────────────
-id  ◄──────────────────── student_id (FK)
-studentid                  studentid
-session_credits            purpose
-...                        lab
-                           login_time
-                           status
+```text
+Sysarch-System/
+├── admin_module/
+├── assets/
+│   ├── css/
+│   └── images/
+├── config/
+│   └── db_config.php
+├── controllers/
+│   ├── announcements/
+│   ├── auth/
+│   ├── dashboard/
+│   ├── reservation/
+│   ├── sitin/
+│   └── student/
+├── database/
+│   ├── sitin.sql
+│   ├── sitin_all_in_one.sql
+│   └── combined_database_update.sql
+├── student_module/
+├── home.php
+├── login_page.php
+├── register_page.php
+└── README.md
 ```
 
-> One student can have **many** sit-in records (one-to-many relationship).
+---
+
+## Tables Created
+
+- `students`
+- `announcements`
+- `sitin_records`
+- `feedback`
+- `lab_reservations`
+- `lab_pc_status`
+- `student_notifications`
+- `software_applications`
+- `testimonials`
 
 ---
 
-## ✅ Features
+## Important Reminder
 
-- Student registration and login by Student ID
-- Student dashboard with session credits, announcements, and lab rules
-- Edit profile via modal
-- Admin dashboard with sit-in stats and announcements
-- Admin can search students by ID
-- Admin can register sit-in sessions (deducts 1 session credit per sit-in)
-- Admin student list with edit and delete actions
-- Reset all session credits to 30 (new semester)
-- Logout with back-button protection (session-based)
-- Shared session checker for both student and admin
+Use only one database setup file at a time. Recommended file for your current project is:
 
----
+```text
+database/sitin_all_in_one.sql
+```
 
-## 🛠️ Tech Stack
+This is the combined SQL file for notifications, reports, software availability, testimonials, and PC number support.
 
-| Technology | Usage |
-|---|---|
-| PHP | Backend logic |
-| MySQL | Database |
-| Bootstrap 5 | UI framework |
-| JavaScript | Frontend interactivity |
-| XAMPP | Local development server |
+## Whiteboard Features Added
+
+The following files were added for the remaining whiteboard items:
+
+- `admin_module/Admin_Reports.php` - admin report page for sit-in and feedback reports.
+- `controllers/reports/export_report.php` - exports PDF and CSV reports.
+- `admin_module/Admin_Software.php` - software application import/upload module.
+- `student_module/testimonials.php` - student testimonial submission page.
+- `admin_module/Admin_Testimonials.php` - admin testimonial approval/management page.
+- `database/add_whiteboard_features.sql` - migration script for existing databases.
+- `database/software_import_sample.csv` - sample CSV format for software import.
+
+### Important Database Update
+
+Run this one combined file in phpMyAdmin SQL tab:
+
+```text
+database/sitin_all_in_one.sql
+```
+
+It includes the database updates for:
+
+- `student_notifications` table
+- `pc_number` column in `sitin_records`
+- `software_applications` table
+- `testimonials` table
+- `reservation_end_time` safety update

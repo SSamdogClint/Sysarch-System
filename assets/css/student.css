@@ -1833,3 +1833,119 @@ body.student-announcements-page.dark-mode .btn-profile-save {
   color: #ffffff;
 }
 
+
+/* ===============================
+   GENERAL STUDENT DARK MODE FIXES
+   Applies to Bootstrap cards/forms/tables on newer pages.
+   =============================== */
+body.dark-mode {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .admin-layout,
+body.dark-mode .admin-main {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .card {
+  background: #0f1b34 !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30) !important;
+}
+
+body.dark-mode .card-header,
+body.dark-mode .card-footer {
+  background: #0f1b34 !important;
+  color: #e5e7eb !important;
+  border-color: rgba(148, 163, 184, 0.20) !important;
+}
+
+body.dark-mode .bg-white {
+  background: #0f1b34 !important;
+}
+
+body.dark-mode .bg-light,
+body.dark-mode .bg-body-secondary {
+  background: #16233f !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .text-muted {
+  color: #a8b3c7 !important;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6,
+body.dark-mode p,
+body.dark-mode label,
+body.dark-mode small {
+  color: #e5e7eb;
+}
+
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+  background-color: #0b1224 !important;
+  color: #e5e7eb !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .form-control::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+  background-color: #0b1224 !important;
+  color: #e5e7eb !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.20) !important;
+}
+
+body.dark-mode .table {
+  --bs-table-color: #e5e7eb;
+  --bs-table-bg: #0f1b34;
+  --bs-table-border-color: rgba(148, 163, 184, 0.20);
+  --bs-table-hover-bg: #16233f;
+  --bs-table-hover-color: #ffffff;
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .table-light {
+  --bs-table-color: #e5e7eb;
+  --bs-table-bg: #16233f;
+  --bs-table-border-color: rgba(148, 163, 184, 0.20);
+}
+
+body.dark-mode .list-group-item {
+  background: transparent !important;
+  color: #e5e7eb !important;
+  border-color: rgba(148, 163, 184, 0.20) !important;
+}
+
+body.dark-mode .alert-info {
+  background: #172554 !important;
+  color: #bfdbfe !important;
+  border-color: #1d4ed8 !important;
+}
+
+body.dark-mode .modal-content {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+  border-color: rgba(148, 163, 184, 0.20) !important;
+}
+
+body.dark-mode .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
