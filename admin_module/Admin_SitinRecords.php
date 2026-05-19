@@ -13,6 +13,7 @@ if (empty($_SESSION['admin_logged_in'])) {
 }
 
 require_once '../config/db_config.php';
+require_once __DIR__ . '/../includes/reset_session_component.php';
 
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
 
@@ -44,6 +45,46 @@ function adminSitinHasColumn(mysqli $conn, string $column): bool {
 
 $pcSelect = adminSitinHasColumn($conn, 'pc_number') ? 'pc_number' : 'NULL AS pc_number';
 
+function adminSitinTableExists(mysqli $conn, string $table): bool {
+    $sql = "
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = ?
+    ";
+
+    $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        return false;
+    }
+
+    $stmt->bind_param('s', $table);
+    $stmt->execute();
+
+    $count = 0;
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    return (int)$count > 0;
+}
+
+$session_reset_logs = [];
+
+if (adminSitinTableExists($conn, 'session_reset_logs')) {
+    $reset_result = $conn->query("
+        SELECT reset_title, total_students, total_credits_before, total_credits_after, reset_by, created_at
+        FROM session_reset_logs
+        ORDER BY created_at DESC
+        LIMIT 5
+    ");
+
+    if ($reset_result) {
+        $session_reset_logs = $reset_result->fetch_all(MYSQLI_ASSOC);
+    }
+}
+
 // Fetch active sit-in records
 $result_active = $conn->query(
     "SELECT id, studentid, fullname, purpose, lab, $pcSelect, session_at_sitin, login_time, status
@@ -72,6 +113,56 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
   
+  <link rel="stylesheet" href="../assets/css/admin_table_tools.css">
+  <style>
+    .records-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-reset-sessions {
+      border: none;
+      outline: none;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 10px 22px rgba(217, 119, 6, 0.22);
+      transition: 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .btn-reset-sessions:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(217, 119, 6, 0.28);
+    }
+
+    .btn-reset-sessions:active {
+      transform: translateY(0);
+    }
+
+    .btn-reset-sessions svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 2.4;
+    }
+
+    body.dark-mode .btn-reset-sessions {
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      color: #ffffff;
+    }
+  </style>
 </head>
 <body class="admin-sitin-records-page">
 
@@ -104,11 +195,20 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       <div class="page-card">
 
         <!-- Header -->
-        <div class="page-card-header">
+        <div class="page-card-header" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
           <h4>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
             Sit-in Records
           </h4>
+
+          <div class="records-header-actions">
+            <?php renderResetSessionButton('Reset Sessions', 'btn-reset-sessions'); ?>
+          </div>
         </div>
 
         <!-- Tabs -->
@@ -127,24 +227,8 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
 
         <!-- ══ TAB: Current Sit-in ══ -->
         <div class="tab-panel active" id="tab-current">
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <label style="font-size:13px;color:#6b7280;">Show</label>
-              <select class="entries-select" id="activeEntries" onchange="updateActive()">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-              <label style="font-size:13px;color:#6b7280;">entries</label>
-            </div>
-            <input type="text" class="search-input" id="activeSearch"
-              placeholder="🔍 Search current sit-ins..."
-              oninput="updateActive()">
-          </div>
-
           <div style="overflow-x:auto;">
-            <table class="records-table">
+            <table class="records-table js-admin-table">
               <thead>
                 <tr>
                   <th>Sit-in ID</th>
@@ -162,33 +246,12 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
               <tbody id="activeBody"></tbody>
             </table>
           </div>
-
-          <div class="pagination-bar">
-            <span id="activeInfo">Showing 0 entries</span>
-            <div class="pagination-btns" id="activePagination"></div>
-          </div>
         </div>
 
         <!-- ══ TAB: Sit-in History ══ -->
         <div class="tab-panel" id="tab-history">
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <label style="font-size:13px;color:#6b7280;">Show</label>
-              <select class="entries-select" id="historyEntries" onchange="updateHistory()">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-              <label style="font-size:13px;color:#6b7280;">entries</label>
-            </div>
-            <input type="text" class="search-input" id="historySearch"
-              placeholder="🔍 Search history..."
-              oninput="updateHistory()">
-          </div>
-
           <div style="overflow-x:auto;">
-            <table class="records-table">
+            <table class="records-table js-admin-table">
               <thead>
                 <tr>
                   <th>Sit-in ID</th>
@@ -205,11 +268,6 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
               </thead>
               <tbody id="historyBody"></tbody>
             </table>
-          </div>
-
-          <div class="pagination-bar">
-            <span id="historyInfo">Showing 0 entries</span>
-            <div class="pagination-btns" id="historyPagination"></div>
           </div>
         </div>
 
@@ -278,6 +336,8 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       </div>
     </div>
   </div>
+
+  <?php renderResetSessionModal($conn, '../controllers/session/reset_sessions.php'); ?>
 
   <!-- TOAST -->
   <div id="toast"></div>
@@ -424,138 +484,86 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       });
     }
 
-    // ── Active tab ──
-    function updateActive() {
-      const q = document.getElementById('activeSearch').value.toLowerCase();
-      filteredActive = activeRecords.filter(r =>
-        r.id.toString().includes(q) ||
-        r.studentid.toLowerCase().includes(q) ||
-        r.fullname.toLowerCase().includes(q) ||
-        r.purpose.toLowerCase().includes(q) ||
-        r.lab.toLowerCase().includes(q)
-      );
-      activePage = 1;
-      renderActive();
+    function escapeHTML(value) {
+      return String(value ?? '').replace(/[&<>"']/g, function (char) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[char];
+      });
     }
 
+    // ── Active tab ──
     function renderActive() {
-      const perPage = parseInt(document.getElementById('activeEntries').value);
-      const total   = filteredActive.length;
-      const start   = (activePage - 1) * perPage;
-      const end     = Math.min(start + perPage, total);
-      const data    = filteredActive.slice(start, end);
-      const tbody   = document.getElementById('activeBody');
+      const tbody = document.getElementById('activeBody');
 
       tbody.innerHTML = '';
-      if (data.length === 0) {
+
+      if (!activeRecords.length) {
         tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No active sit-ins found.</td></tr>';
-      } else {
-        data.forEach(r => {
-          tbody.innerHTML += `
-            <tr>
-              <td style="color:#9ca3af;font-weight:600;">#${r.id}</td>
-              <td style="font-weight:600;color:#1d3a6e;">${r.studentid}</td>
-              <td>${r.fullname}</td>
-              <td>${r.purpose}</td>
-              <td>${r.lab}</td>
-              <td>${r.pc_number ? 'PC ' + r.pc_number : '—'}</td>
-              <td><span class="badge-session">${r.session_at_sitin}</span></td>
-              <td style="font-size:12px;color:#6b7280;">${formatDate(r.login_time)}</td>
-              <td><span class="badge-status active">active</span></td>
-              <td>
-                <button class="btn-deactivate" onclick="openDeactivateModal(${r.id}, '${r.fullname}')">
-                  ⏹ Deactivate
-                </button>
-              </td>
-            </tr>`;
-        });
+        return;
       }
 
-      renderPagination('active', total, perPage);
-      document.getElementById('activeInfo').textContent =
-        total === 0 ? 'Showing 0 entries' : `Showing ${start + 1} to ${end} of ${total} entries`;
+      activeRecords.forEach(r => {
+        const id = Number(r.id || 0);
+        const fullnameForJs = JSON.stringify(String(r.fullname ?? ''));
+
+        tbody.innerHTML += `
+          <tr>
+            <td style="color:#9ca3af;font-weight:600;">#${escapeHTML(r.id)}</td>
+            <td style="font-weight:600;color:#1d3a6e;">${escapeHTML(r.studentid)}</td>
+            <td>${escapeHTML(r.fullname)}</td>
+            <td>${escapeHTML(r.purpose)}</td>
+            <td>${escapeHTML(r.lab)}</td>
+            <td>${r.pc_number ? 'PC ' + escapeHTML(r.pc_number) : '—'}</td>
+            <td><span class="badge-session">${escapeHTML(r.session_at_sitin)}</span></td>
+            <td style="font-size:12px;color:#6b7280;">${formatDate(r.login_time)}</td>
+            <td><span class="badge-status active">Active</span></td>
+            <td>
+              <button class="btn-deactivate" onclick='openDeactivateModal(${id}, ${fullnameForJs})'>
+                ⏹ Deactivate
+              </button>
+            </td>
+          </tr>`;
+      });
     }
 
     // ── History tab ──
-    function updateHistory() {
-      const q = document.getElementById('historySearch').value.toLowerCase();
-      filteredHistory = historyRecords.filter(r =>
-        r.id.toString().includes(q) ||
-        r.studentid.toLowerCase().includes(q) ||
-        r.fullname.toLowerCase().includes(q) ||
-        r.purpose.toLowerCase().includes(q) ||
-        r.lab.toLowerCase().includes(q)
-      );
-      historyPage = 1;
-      renderHistory();
-    }
-
     function renderHistory() {
-      const perPage = parseInt(document.getElementById('historyEntries').value);
-      const total   = filteredHistory.length;
-      const start   = (historyPage - 1) * perPage;
-      const end     = Math.min(start + perPage, total);
-      const data    = filteredHistory.slice(start, end);
-      const tbody   = document.getElementById('historyBody');
+      const tbody = document.getElementById('historyBody');
 
       tbody.innerHTML = '';
-      if (data.length === 0) {
+
+      if (!historyRecords.length) {
         tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No history records found.</td></tr>';
-      } else {
-        data.forEach(r => {
-          tbody.innerHTML += `
-            <tr>
-              <td style="color:#9ca3af;font-weight:600;">#${r.id}</td>
-              <td style="font-weight:600;color:#1d3a6e;">${r.studentid}</td>
-              <td>${r.fullname}</td>
-              <td>${r.purpose}</td>
-              <td>${r.lab}</td>
-              <td>${r.pc_number ? 'PC ' + r.pc_number : '—'}</td>
-              <td><span class="badge-session">${r.session_at_sitin}</span></td>
-              <td style="font-size:12px;color:#6b7280;">${formatDate(r.login_time)}</td>
-              <td><span class="badge-status done">done</span></td>
-              <td>
-                <button class="btn-delete" onclick="openDeleteModal(${r.id}, '${r.fullname}')">
-                  🗑️ Delete
-                </button>
-              </td>
-            </tr>`;
-        });
+        return;
       }
 
-      renderPagination('history', total, perPage);
-      document.getElementById('historyInfo').textContent =
-        total === 0 ? 'Showing 0 entries' : `Showing ${start + 1} to ${end} of ${total} entries`;
-    }
+      historyRecords.forEach(r => {
+        const id = Number(r.id || 0);
+        const fullnameForJs = JSON.stringify(String(r.fullname ?? ''));
 
-    // ── Pagination ──
-    function renderPagination(type, total, perPage) {
-      const totalPages  = Math.ceil(total / perPage);
-      const currentPage = type === 'active' ? activePage : historyPage;
-      const container   = document.getElementById(type + 'Pagination');
-      container.innerHTML = '';
-
-      const prev = document.createElement('button');
-      prev.className   = 'page-btn';
-      prev.textContent = '← Prev';
-      prev.disabled    = currentPage === 1;
-      prev.onclick     = () => { type === 'active' ? activePage-- : historyPage--; type === 'active' ? renderActive() : renderHistory(); };
-      container.appendChild(prev);
-
-      for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.className   = 'page-btn' + (i === currentPage ? ' active' : '');
-        btn.textContent = i;
-        btn.onclick     = ((p) => () => { type === 'active' ? activePage = p : historyPage = p; type === 'active' ? renderActive() : renderHistory(); })(i);
-        container.appendChild(btn);
-      }
-
-      const next = document.createElement('button');
-      next.className   = 'page-btn';
-      next.textContent = 'Next →';
-      next.disabled    = currentPage === totalPages || total === 0;
-      next.onclick     = () => { type === 'active' ? activePage++ : historyPage++; type === 'active' ? renderActive() : renderHistory(); };
-      container.appendChild(next);
+        tbody.innerHTML += `
+          <tr>
+            <td style="color:#9ca3af;font-weight:600;">#${escapeHTML(r.id)}</td>
+            <td style="font-weight:600;color:#1d3a6e;">${escapeHTML(r.studentid)}</td>
+            <td>${escapeHTML(r.fullname)}</td>
+            <td>${escapeHTML(r.purpose)}</td>
+            <td>${escapeHTML(r.lab)}</td>
+            <td>${r.pc_number ? 'PC ' + escapeHTML(r.pc_number) : '—'}</td>
+            <td><span class="badge-session">${escapeHTML(r.session_at_sitin)}</span></td>
+            <td style="font-size:12px;color:#6b7280;">${formatDate(r.login_time)}</td>
+            <td><span class="badge-status done">Done</span></td>
+            <td>
+              <button class="btn-delete" onclick='openDeleteModal(${id}, ${fullnameForJs})'>
+                🗑️ Delete
+              </button>
+            </td>
+          </tr>`;
+      });
     }
 
     // Initial render
@@ -762,5 +770,6 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
     });
     
   </script>
+  <script src="../assets/js/admin_table_tools.js"></script>
 </body>
 </html>

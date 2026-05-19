@@ -59,6 +59,13 @@ session_start();
           <?php unset($_SESSION['login_error']); ?>
         <?php endif; ?>
 
+        <?php if (!empty($_SESSION['reset_success'])): ?>
+          <div style="background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:1rem;">
+            <?= htmlspecialchars($_SESSION['reset_success']) ?>
+          </div>
+          <?php unset($_SESSION['reset_success']); ?>
+        <?php endif; ?>
+
         <?php if (!empty($_SESSION['reg_success'])): ?>
           <div style="background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:1rem;">
             <?= htmlspecialchars($_SESSION['reg_success']) ?>
@@ -80,7 +87,7 @@ session_start();
             <label class="check-row" style="margin:0;">
               <input type="checkbox" name="remember" id="remember"> Remember me
             </label>
-            <a href="#" style="font-size:13px;color:#1d4ed8;text-decoration:none;">Forgot password?</a>
+            <a href="forgot_password.php" style="font-size:13px;color:#1d4ed8;text-decoration:none;">Forgot password?</a>
           </div>
           <button type="submit" class="submit-btn">Sign in</button>
         </form>

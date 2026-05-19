@@ -2139,4 +2139,799 @@ body.dark-mode #editModal label {
   color: #cbd5e1 !important;
 }
 
+    .dashboard-shell {
+      width: min(1260px, 100%);
+      margin: 0 auto;
+      padding: 32px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      border-radius: 24px;
+      padding: 30px 34px;
+      color: #ffffff;
+      box-shadow: 0 20px 55px rgba(37, 99, 235, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      right: -90px;
+      top: -110px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 999px;
+      right: 120px;
+      bottom: -120px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .hero-left,
+    .hero-badges {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 800;
+      letter-spacing: -0.8px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: rgba(255, 255, 255, 0.92);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      min-width: 260px;
+    }
+
+    .hero-pill {
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 22px;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+    }
+
+    .panel-header {
+      background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+      color: #ffffff;
+      padding: 15px 18px;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .panel-header-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-header a {
+      color: #ffffff;
+      font-size: 12px;
+      text-decoration: none;
+      opacity: 0.95;
+    }
+
+    .panel-header a:hover {
+      text-decoration: underline;
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: #111827;
+      line-height: 1;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex: 0 0 auto;
+    }
+
+    .stat-blue { background: #dbeafe; color: #1d4ed8; }
+    .stat-green { background: #dcfce7; color: #15803d; }
+    .stat-yellow { background: #fef3c7; color: #b45309; }
+    .stat-purple { background: #ede9fe; color: #6d28d9; }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .mini-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 18px;
+      background: #f8fafc;
+      min-height: 170px;
+    }
+
+    .mini-card h5 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-empty {
+      color: #94a3b8;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .detail-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      border-bottom: 1px dashed #dbe3ef;
+      padding: 9px 0;
+      font-size: 13px;
+    }
+
+    .detail-line:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-line span:first-child {
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    .detail-line span:last-child {
+      color: #111827;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .dashboard-showcase {
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr) 320px;
+      grid-template-rows: 490px 360px;
+      gap: 22px;
+      align-items: stretch;
+      grid-template-areas:
+        "profile testimonials rules"
+        "profile announcements announcements";
+    }
+
+    .showcase-profile { grid-area: profile; }
+    .showcase-testimonials { grid-area: testimonials; }
+    .showcase-rules { grid-area: rules; }
+    .showcase-announcements { grid-area: announcements; }
+
+    /*
+      Fixed dashboard card alignment:
+      - Testimonials and Laboratory Rules stay aligned even when empty.
+      - Announcements stays aligned with the lower part of Student Information.
+      - If content exceeds the fixed area, the inside body becomes scrollable.
+    */
+    .showcase-profile,
+    .showcase-testimonials,
+    .showcase-rules,
+    .showcase-announcements {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .showcase-profile .panel-body,
+    .showcase-testimonials .panel-body,
+    .showcase-rules .panel-body,
+    .showcase-announcements .panel-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: #64748b transparent;
+    }
+
+    .showcase-profile .panel-body::-webkit-scrollbar,
+    .showcase-testimonials .panel-body::-webkit-scrollbar,
+    .showcase-rules .panel-body::-webkit-scrollbar,
+    .showcase-announcements .panel-body::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    .showcase-profile .panel-body::-webkit-scrollbar-track,
+    .showcase-testimonials .panel-body::-webkit-scrollbar-track,
+    .showcase-rules .panel-body::-webkit-scrollbar-track,
+    .showcase-announcements .panel-body::-webkit-scrollbar-track {
+      background: transparent;
+      border-radius: 999px;
+    }
+
+    .showcase-profile .panel-body::-webkit-scrollbar-thumb,
+    .showcase-testimonials .panel-body::-webkit-scrollbar-thumb,
+    .showcase-rules .panel-body::-webkit-scrollbar-thumb,
+    .showcase-announcements .panel-body::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    .showcase-profile .panel-body::-webkit-scrollbar-thumb:hover,
+    .showcase-testimonials .panel-body::-webkit-scrollbar-thumb:hover,
+    .showcase-rules .panel-body::-webkit-scrollbar-thumb:hover,
+    .showcase-announcements .panel-body::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    .showcase-profile {
+      height: calc(490px + 22px + 360px);
+    }
+
+    .student-card-top {
+      text-align: center;
+      padding: 8px 0 20px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 18px;
+    }
+
+    .student-avatar {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      margin: 0 auto 14px;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: #ffffff;
+      font-size: 34px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 5px solid #ffffff;
+      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
+      overflow: hidden;
+    }
+
+    .student-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .student-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+
+    .student-sub {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-row {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 13px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #334155;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    .info-icon {
+      width: 18px;
+      height: 18px;
+      color: #2563eb;
+      flex: 0 0 auto;
+    }
+
+    .info-label {
+      font-weight: 800;
+      color: #111827;
+      margin-right: 4px;
+    }
+
+    .credit-badge {
+      margin-top: 16px;
+      background: linear-gradient(135deg, #dbeafe, #eff6ff);
+      border: 1px solid #bfdbfe;
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .credit-badge small {
+      display: block;
+      color: #1d4ed8;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .credit-badge strong {
+      display: block;
+      color: #1e3a8a;
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1;
+      margin: 8px 0;
+    }
+
+    .credit-badge span {
+      font-size: 13px;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    .reward-mini {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .reward-mini-card {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .reward-mini-card small {
+      display: block;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .reward-mini-card strong {
+      color: #111827;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .quick-links {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .quick-link {
+      text-decoration: none;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 13px 14px;
+      color: #1f2937;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.18s ease;
+    }
+
+    .quick-link:hover {
+      border-color: #2563eb;
+      color: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
+    }
+
+    .testimonial-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .testimonial-card {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .testimonial-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .testimonial-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .testimonial-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 2px;
+    }
+
+    .testimonial-course {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .testimonial-stars {
+      color: #f59e0b;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    .testimonial-message {
+      color: #334155;
+      font-size: 13px;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .testimonial-date {
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .announce-feed {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .announce-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    .announce-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+
+    .announce-meta {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .announce-text {
+      font-size: 13px;
+      color: #334155;
+      line-height: 1.6;
+    }
+
+    .rules-body {
+      max-height: none;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .rules-body h2 {
+      font-size: 16px;
+      text-align: center;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+
+    .rules-body h3 {
+      font-size: 13px;
+      text-align: center;
+      color: #64748b;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .rules-body h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #111827;
+      margin-top: 16px;
+      margin-bottom: 6px;
+    }
+
+    .rules-body p {
+      color: #475569;
+      margin-bottom: 10px;
+    }
+
+    body.dark-mode.student-dashboard-page {
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    body.dark-mode .admin-main {
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 36%),
+        linear-gradient(135deg, #0f172a 0%, #111827 100%) !important;
+      color: #e5e7eb !important;
+    }
+
+    body.dark-mode .panel,
+    body.dark-mode .stat-card {
+      background: #111827 !important;
+      color: #e5e7eb !important;
+      border-color: #2d436d !important;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    body.dark-mode .student-card-top {
+      border-color: #2d436d;
+    }
+
+    body.dark-mode .student-name,
+    body.dark-mode .info-label,
+    body.dark-mode .stat-value,
+    body.dark-mode .mini-card h5,
+    body.dark-mode .detail-line span:last-child,
+    body.dark-mode .announce-title,
+    body.dark-mode .testimonial-name,
+    body.dark-mode .rules-body h2,
+    body.dark-mode .rules-body h4,
+    body.dark-mode .reward-mini-card strong {
+      color: #f8fafc !important;
+    }
+
+    body.dark-mode .student-sub,
+    body.dark-mode .stat-label,
+    body.dark-mode .announce-meta,
+    body.dark-mode .testimonial-course,
+    body.dark-mode .testimonial-date,
+    body.dark-mode .rules-body h3,
+    body.dark-mode .reward-mini-card small {
+      color: #a8b3c7 !important;
+    }
+
+    body.dark-mode .info-row,
+    body.dark-mode .quick-link,
+    body.dark-mode .mini-card,
+    body.dark-mode .announce-item,
+    body.dark-mode .testimonial-card,
+    body.dark-mode .reward-mini-card {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+      color: #e5e7eb !important;
+    }
+
+    body.dark-mode .quick-link:hover {
+      color: #93c5fd !important;
+      border-color: #3b82f6 !important;
+    }
+
+    body.dark-mode .credit-badge {
+      background: linear-gradient(135deg, #172554, #0f172a) !important;
+      border-color: #1d4ed8 !important;
+    }
+
+    body.dark-mode .credit-badge strong {
+      color: #93c5fd !important;
+    }
+
+    body.dark-mode .credit-badge span,
+    body.dark-mode .announce-text,
+    body.dark-mode .testimonial-message,
+    body.dark-mode .rules-body p,
+    body.dark-mode .detail-line span:first-child {
+      color: #cbd5e1 !important;
+    }
+
+    body.dark-mode .detail-line {
+      border-color: #334155;
+    }
+
+    body.dark-mode .mini-empty {
+      color: #94a3b8 !important;
+    }
+
+    body.dark-mode .showcase-profile .panel-body,
+    body.dark-mode .showcase-testimonials .panel-body,
+    body.dark-mode .showcase-rules .panel-body,
+    body.dark-mode .showcase-announcements .panel-body {
+      scrollbar-color: #475569 transparent;
+    }
+
+    body.dark-mode .showcase-profile .panel-body::-webkit-scrollbar-thumb,
+    body.dark-mode .showcase-testimonials .panel-body::-webkit-scrollbar-thumb,
+    body.dark-mode .showcase-rules .panel-body::-webkit-scrollbar-thumb,
+    body.dark-mode .showcase-announcements .panel-body::-webkit-scrollbar-thumb {
+      background: #334155;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    body.dark-mode .showcase-profile .panel-body::-webkit-scrollbar-thumb:hover,
+    body.dark-mode .showcase-testimonials .panel-body::-webkit-scrollbar-thumb:hover,
+    body.dark-mode .showcase-rules .panel-body::-webkit-scrollbar-thumb:hover,
+    body.dark-mode .showcase-announcements .panel-body::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    body.dark-mode .modal-content,
+    body.dark-mode #editModal > div {
+      background: #111827 !important;
+      color: #e5e7eb !important;
+      border: 1px solid #2d436d !important;
+    }
+
+    body.dark-mode #editModal input {
+      background: #0f172a !important;
+      color: #e5e7eb !important;
+      border-color: #334155 !important;
+    }
+
+    body.dark-mode #editModal label {
+      color: #cbd5e1 !important;
+    }
+
+    @media (max-width: 1200px) {
+      .dashboard-showcase {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        grid-template-areas:
+          "profile"
+          "testimonials"
+          "rules"
+          "announcements";
+      }
+
+      .showcase-profile,
+      .showcase-testimonials,
+      .showcase-rules,
+      .showcase-announcements {
+        height: auto;
+      }
+
+      .showcase-rules .panel-body {
+        max-height: 420px;
+      }
+
+      .showcase-announcements .panel-body {
+        max-height: 420px;
+      }
+
+      .stat-grid,
+      .overview-grid,
+      .testimonial-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-shell {
+        padding: 18px;
+      }
+
+      .hero {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .hero-badges {
+        justify-content: flex-start;
+        min-width: 0;
+      }
+
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 

@@ -443,6 +443,7 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
                 <button type="button" class="btn-panel-action btn-reject" id="btnReject" onclick="reservationAction('reject')"><i class="bi bi-x-circle"></i> Reject</button>
                 <button type="button" class="btn-panel-action btn-done wide" id="btnRegisterSitin" onclick="openSitinModalFromReservation()"><i class="bi bi-pc-display-horizontal"></i> Register Sit-in</button>
                 <button type="button" class="btn-panel-action btn-neutral wide" id="btnPcStatus" onclick="togglePcAvailability()"><i class="bi bi-ban"></i> Mark Unavailable</button>
+                <button type="button" class="btn-panel-action btn-reject wide" id="btnMarkAllUnavailable" onclick="markAllUnavailable()"><i class="bi bi-ban-fill"></i> Mark All Unavailable</button>
               </div>
             </div>
           </div>
@@ -1257,7 +1258,8 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
         done: 'Mark this reservation as done?',
         delete: 'Delete this reservation request? This action cannot be undone.',
         mark_unavailable: 'Mark this PC as unavailable?',
-        mark_available: 'Mark this PC as available again?'
+        mark_available: 'Mark this PC as available again?',
+        mark_all_unavailable: 'Mark all 56 PCs in this laboratory as unavailable?'
       };
       return messages[action] || 'Continue this action?';
     }
@@ -1307,6 +1309,22 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
         formData.append('action', action);
         formData.append('lab', document.getElementById('viewLab').value);
         formData.append('pc_number', selectedSeat.pc_number);
+        postReservationAction(formData, true);
+      });
+    }
+
+    function markAllUnavailable() {
+      const lab = document.getElementById('viewLab').value;
+
+      if (!lab) {
+        showToast('Please select a laboratory first.');
+        return;
+      }
+
+      askConfirm(confirmMessage('mark_all_unavailable'), function () {
+        const formData = new FormData();
+        formData.append('action', 'mark_all_unavailable');
+        formData.append('lab', lab);
         postReservationAction(formData, true);
       });
     }

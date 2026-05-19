@@ -53,7 +53,8 @@ if (!$sitin) {
 $stmt = $conn->prepare("
     UPDATE sitin_records
     SET status = 'done',
-        logout_time = NOW()
+        logout_time = NOW(),
+        duration_minutes = TIMESTAMPDIFF(MINUTE, login_time, NOW())
     WHERE id = ?
 ");
 $stmt->bind_param('i', $sitin_id);

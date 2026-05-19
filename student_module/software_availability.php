@@ -66,7 +66,7 @@ $softwareList = [];
 
 $stmt = $conn->prepare("
     SELECT * 
-    FROM software_applications 
+    FROM software_availability 
     $whereSql 
     ORDER BY lab ASC, software_name ASC
 ");
@@ -85,7 +85,7 @@ $labs = [];
 
 $result = $conn->query("
     SELECT DISTINCT lab 
-    FROM software_applications 
+    FROM software_availability 
     ORDER BY lab ASC
 ");
 
@@ -106,7 +106,7 @@ $result = $conn->query("
         COUNT(DISTINCT lab) AS labs, 
         SUM(status = 'installed') AS installed, 
         SUM(status = 'unavailable') AS unavailable 
-    FROM software_applications
+    FROM software_availability
 ");
 
 if ($result && $row = $result->fetch_assoc()) {
@@ -123,7 +123,7 @@ $result = $conn->query("
         lab, 
         COUNT(*) AS total, 
         SUM(status = 'installed') AS installed 
-    FROM software_applications 
+    FROM software_availability 
     GROUP BY lab 
     ORDER BY lab ASC
 ");

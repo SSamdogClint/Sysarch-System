@@ -2,90 +2,53 @@
 
 **University of Cebu — College of Computer Studies**
 
-A web-based sit-in monitoring system for CCS students and administrators.
+A PHP + MySQL web-based sit-in monitoring, reservation, software availability, rewards, reports, and leaderboard system.
 
----
+## Final Submission Notes
 
-## Fixed Notes
+This cleaned copy includes fixes for:
 
-This copy includes fixes for:
+- Correct reward controller: `controllers/rewards/update_reward_points.php`
+- Reward score no longer decreases when points are redeemed
+- Admin Rewards page includes Current Leaderboard, Past Leaderboards, and Archive & Reset in one page
+- Reset Sessions button with reset title and reset logs
+- PC availability now uses `lab_computers`
+- Software availability now uses `software_availability`
+- Feedback reports now support `feedback.sitin_id`
+- Student notifications table is included
+- PC units are generated from PC 1 to PC 56 per lab
+- `.git` folder removed from the final ZIP
 
-- Broken `home.php` links for logout and dashboard.
-- Database name mismatch: the project now consistently uses `sitin`.
-- Duplicate `reservation_end_time` SQL issue removed.
-- `logout_time` is now included directly in the `sitin_records` table.
-- Reservation auto-cancel grace period fixed from 1 minute to 15 minutes.
-- Student profile update is safer: students can only update their own account.
-- Feedback submission is safer: students can only submit feedback for their own sit-in record.
-- Login session now includes `middlename`.
-- Admin sit-in registration no longer silently closes active sessions.
+## Requirements
 
----
+- XAMPP
+- PHP 8.x
+- MySQL / MariaDB
+- Web browser
 
-## Installation Guide
+## Installation
 
-### Step 1: Install XAMPP
-
-1. Install XAMPP.
-2. Open XAMPP Control Panel.
-3. Start **Apache** and **MySQL**.
-
----
-
-### Step 2: Copy Project Folder
-
-Copy the `Sysarch-System` folder to:
+1. Copy the project folder to:
 
 ```text
-C:\xampp\htdocs\
+C:\xampp\htdocs\Sysarch-System
 ```
 
-Your path should look like this:
+2. Start **Apache** and **MySQL** in XAMPP.
 
-```text
-C:\xampp\htdocs\Sysarch-System\
-```
-
----
-
-### Step 3: Import / Update Database
-
-1. Open phpMyAdmin:
+3. Open phpMyAdmin:
 
 ```text
 http://localhost/phpmyadmin
 ```
 
-2. Click your `sitin` database, then open the **SQL** tab.
-3. Open this file from the project folder:
+4. Run this SQL file:
 
 ```text
-database/sitin_all_in_one.sql
+database/full_database_tables_sitin_pc56.sql
 ```
 
-4. Copy all SQL contents, paste them in phpMyAdmin, then click **Go**.
-
-This one combined SQL file creates missing tables and adds missing columns without deleting your existing records.
-
-For a completely fresh database only, you may also import:
-
-```text
-database/sitin.sql
-```
-
-Reminder: `database/sitin.sql` drops and recreates the tables, so use `sitin_all_in_one.sql` if you want to keep your current data.
-
----
-
-## Manual Database SQL
-
-If you want to paste the SQL manually, use this combined SQL file:
-
-```text
-database/sitin_all_in_one.sql
-```
-
----
+This creates/updates the `sitin` database and the required tables.
 
 ## Database Connection
 
@@ -95,54 +58,27 @@ Open:
 config/db_config.php
 ```
 
-Make sure it matches your XAMPP setup:
+Default XAMPP setup:
 
 ```php
-<?php
-// config/db_config.php
-
-define('ROOT_PATH', dirname(__DIR__, 1));
-
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'sitin');
-
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-
-if ($conn->connect_error) {
-    die('Connection failed: ' . $conn->connect_error);
-}
-
-$conn->set_charset('utf8mb4');
 ```
 
----
+## Access URLs
 
-## Access the System
-
-Home page:
+Home:
 
 ```text
 http://localhost/Sysarch-System/home.php
 ```
 
-Login page:
+Login:
 
 ```text
 http://localhost/Sysarch-System/login_page.php
-```
-
-Register page:
-
-```text
-http://localhost/Sysarch-System/register_page.php
-```
-
-Student dashboard:
-
-```text
-http://localhost/Sysarch-System/student_module/student_dashboard.php
 ```
 
 Admin dashboard:
@@ -151,97 +87,89 @@ Admin dashboard:
 http://localhost/Sysarch-System/admin_module/admin_dashboard.php
 ```
 
----
+Student dashboard:
+
+```text
+http://localhost/Sysarch-System/student_module/student_dashboard.php
+```
 
 ## Default Admin Login
 
 | Field | Value |
 |---|---|
-| Username | `admin` |
+| ID Number | `admin` |
 | Password | `admin123` |
 
-For real deployment, move admin accounts to a database table and use hashed passwords.
+## Main Tables
 
----
-
-## Main Folder Structure
-
-```text
-Sysarch-System/
-├── admin_module/
-├── assets/
-│   ├── css/
-│   └── images/
-├── config/
-│   └── db_config.php
-├── controllers/
-│   ├── announcements/
-│   ├── auth/
-│   ├── dashboard/
-│   ├── reservation/
-│   ├── sitin/
-│   └── student/
-├── database/
-│   ├── sitin.sql
-│   ├── sitin_all_in_one.sql
-│   └── combined_database_update.sql
-├── student_module/
-├── home.php
-├── login_page.php
-├── register_page.php
-└── README.md
-```
-
----
-
-## Tables Created
-
+- `admins`
 - `students`
-- `announcements`
 - `sitin_records`
-- `feedback`
 - `lab_reservations`
-- `lab_pc_status`
-- `student_notifications`
-- `software_applications`
+- `announcements`
 - `testimonials`
+- `software_availability`
+- `feedback`
+- `reward_point_logs`
+- `reward_redemption_logs`
+- `reward_season_settings`
+- `leaderboard_archives`
+- `leaderboard_archive_entries`
+- `session_reset_logs`
+- `student_notifications`
+- `notifications`
+- `lab_computers`
 
----
+## Feature Summary
 
-## Important Reminder
+### Sit-in Records
+Admin can register, deactivate, delete, and view sit-in records.
 
-Use only one database setup file at a time. Recommended file for your current project is:
+### Reservations
+Students can reserve lab PCs. Admin can approve, reject, cancel, mark done, and mark PCs available/unavailable.
 
-```text
-database/sitin_all_in_one.sql
-```
-
-This is the combined SQL file for notifications, reports, software availability, testimonials, and PC number support.
-
-## Whiteboard Features Added
-
-The following files were added for the remaining whiteboard items:
-
-- `admin_module/Admin_Reports.php` - admin report page for sit-in and feedback reports.
-- `controllers/reports/export_report.php` - exports PDF and CSV reports.
-- `admin_module/Admin_Software.php` - software application import/upload module.
-- `student_module/testimonials.php` - student testimonial submission page.
-- `admin_module/Admin_Testimonials.php` - admin testimonial approval/management page.
-- `database/add_whiteboard_features.sql` - migration script for existing databases.
-- `database/software_import_sample.csv` - sample CSV format for software import.
-
-### Important Database Update
-
-Run this one combined file in phpMyAdmin SQL tab:
+### Rewards and Leaderboard
+Admin can rate students by percentage:
 
 ```text
-database/sitin_all_in_one.sql
+0% = 0 points
+25% = 2.5 points
+50% = 5 points
+75% = 7.5 points
+100% = 10 points
 ```
 
-It includes the database updates for:
+Leaderboard score:
 
-- `student_notifications` table
-- `pc_number` column in `sitin_records`
-- `software_applications` table
-- `testimonials` table
-- `reservation_end_time` safety update
+```text
+Final Score = Earned Reward Score × 60% + Sit-in Hour Score × 20% + Task Score × 20%
+```
+
+### Redeem Sessions
+Students can redeem:
+
+```text
+10 spendable points = 1 additional sit-in session
+```
+
+Redeeming does **not** reduce `reward_points_earned`, so leaderboard score does not go down.
+
+### Archive and Reset
+Admin can archive the current leaderboard and reset the reward season. Past leaderboards are viewable in the same Rewards page.
+
+### Reset Sessions
+Admin can reset all student session credits back to 30 and save a reset title/log.
+
+## Final Reminder
+
+Before final demo, test these accounts/features:
+
+- Register a new student
+- Login as student
+- Create a reservation
+- Approve reservation as admin
+- Register and deactivate sit-in
+- Add reward rating
+- Redeem 10 points
+- Archive and reset leaderboard
+- Reset sessions with title

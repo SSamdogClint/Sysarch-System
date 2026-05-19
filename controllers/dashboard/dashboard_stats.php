@@ -55,3 +55,17 @@ if ($result && $result->num_rows > 0) {
     $chart_labels = ['No Data'];
     $chart_values = [1];
 }
+
+// Latest announcements for admin dashboard feed
+$latest_announcements = [];
+$result = $conn->query("
+    SELECT id, title, message, posted_by, created_at
+    FROM announcements
+    ORDER BY created_at DESC
+    LIMIT 5
+");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $latest_announcements[] = $row;
+    }
+}

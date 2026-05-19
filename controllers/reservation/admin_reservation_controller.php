@@ -24,6 +24,10 @@ if ($action === '') {
 }
 
 /* PC availability actions */
+if ($action === 'mark_all_unavailable') {
+    handleAllPcUnavailable($conn);
+}
+
 if (in_array($action, ['mark_unavailable', 'mark_available'], true)) {
     handlePcAvailability($conn, $action);
 }
@@ -68,6 +72,49 @@ function jsonResponse(bool $success, string $message): void
     exit;
 }
 
+function handleAllPcUnavailable(mysqli $conn): void
+{
+    $lab = trim($_POST['lab'] ?? '');
+
+    if ($lab === '') {
+        jsonResponse(false, 'Invalid laboratory.');
+    }
+
+    $stmt = $conn->prepare("
+        INSERT INTO lab_computers (lab, pc_number, status, notes)
+        VALUES (?, ?, 'unavailable', 'Marked all unavailable by admin')
+        ON DUPLICATE KEY UPDATE
+            status = 'unavailable',
+            notes = VALUES(notes)
+    ");
+
+    if (!$stmt) {
+        jsonResponse(false, 'Failed to prepare mark all unavailable update.');
+    }
+
+    $conn->begin_transaction();
+
+    try {
+        for ($pc = 1; $pc <= 56; $pc++) {
+            $stmt->bind_param('si', $lab, $pc);
+
+            if (!$stmt->execute()) {
+                throw new Exception('Failed to update PC ' . $pc);
+            }
+        }
+
+        $stmt->close();
+        $conn->commit();
+
+        jsonResponse(true, 'All PCs in ' . $lab . ' were marked unavailable.');
+    } catch (Exception $e) {
+        $stmt->close();
+        $conn->rollback();
+
+        jsonResponse(false, 'Failed to mark all PCs unavailable.');
+    }
+}
+
 function handlePcAvailability(mysqli $conn, string $action): void
 {
     $lab = trim($_POST['lab'] ?? '');
@@ -79,12 +126,17 @@ function handlePcAvailability(mysqli $conn, string $action): void
 
     if ($action === 'mark_unavailable') {
         $stmt = $conn->prepare("
-            INSERT INTO lab_pc_status (lab, pc_number, status, note)
+            INSERT INTO lab_computers (lab, pc_number, status, notes)
             VALUES (?, ?, 'unavailable', 'Marked unavailable by admin')
             ON DUPLICATE KEY UPDATE 
                 status = 'unavailable',
-                note = VALUES(note)
+                notes = VALUES(notes)
         ");
+
+        if (!$stmt) {
+            jsonResponse(false, 'Failed to prepare PC unavailable update.');
+        }
+
         $stmt->bind_param('si', $lab, $pc);
         $ok = $stmt->execute();
         $stmt->close();
@@ -93,9 +145,17 @@ function handlePcAvailability(mysqli $conn, string $action): void
     }
 
     $stmt = $conn->prepare("
-        DELETE FROM lab_pc_status
-        WHERE lab = ? AND pc_number = ?
+        INSERT INTO lab_computers (lab, pc_number, status, notes)
+        VALUES (?, ?, 'available', NULL)
+        ON DUPLICATE KEY UPDATE
+            status = 'available',
+            notes = NULL
     ");
+
+    if (!$stmt) {
+        jsonResponse(false, 'Failed to prepare PC available update.');
+    }
+
     $stmt->bind_param('si', $lab, $pc);
     $ok = $stmt->execute();
     $stmt->close();

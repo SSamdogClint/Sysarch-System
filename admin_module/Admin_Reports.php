@@ -523,6 +523,7 @@ if ($report === 'reservation') {
       vertical-align: middle;
     }
   </style>
+  <link rel="stylesheet" href="../assets/css/admin_table_tools.css">
 </head>
 
 <body class="admin-dashboard-page">
@@ -776,7 +777,7 @@ if ($report === 'reservation') {
               <div class="table-responsive">
                 <?php if ($report === 'feedback'): ?>
 
-                  <table class="table table-hover align-middle mb-0">
+                  <table class="table table-hover align-middle mb-0 js-admin-table">
                     <thead class="table-light">
                       <tr>
                         <th class="ps-4">#</th>
@@ -816,7 +817,7 @@ if ($report === 'reservation') {
 
                 <?php elseif ($report === 'reservation'): ?>
 
-                  <table class="table table-hover align-middle mb-0">
+                  <table class="table table-hover align-middle mb-0 js-admin-table">
                     <thead class="table-light">
                       <tr>
                         <th class="ps-4">#</th>
@@ -868,7 +869,7 @@ if ($report === 'reservation') {
 
                 <?php else: ?>
 
-                  <table class="table table-hover align-middle mb-0">
+                  <table class="table table-hover align-middle mb-0 js-admin-table">
                     <thead class="table-light">
                       <tr>
                         <th class="ps-4">#</th>
@@ -978,5 +979,6 @@ if ($report === 'reservation') {
       });
     }
   </script>
+  <script src="../assets/js/admin_table_tools.js"></script>
 </body>
 </html>

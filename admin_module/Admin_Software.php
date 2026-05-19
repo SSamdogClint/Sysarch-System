@@ -15,8 +15,9 @@ if (empty($_SESSION['admin_logged_in'])) {
 }
 
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
-$message = '';
-$messageType = 'success';
+$message = $_SESSION['software_flash_message'] ?? '';
+$messageType = $_SESSION['software_flash_type'] ?? 'success';
+unset($_SESSION['software_flash_message'], $_SESSION['software_flash_type']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -36,14 +37,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $status = 'installed';
             }
 
-            $stmt = $conn->prepare("INSERT INTO software_applications (lab, software_name, category, version, status) VALUES (?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO software_availability (lab, software_name, category, version, status) VALUES (?, ?, ?, ?, ?)");
             if ($stmt) {
                 $stmt->bind_param('sssss', $lab, $softwareName, $category, $version, $status);
                 $stmt->execute();
                 $stmt->close();
                 $message = 'Software application added successfully.';
             } else {
-                $message = 'Unable to add software. Please check the software_applications table.';
+                $message = 'Unable to add software. Please check the software_availability table.';
                 $messageType = 'danger';
             }
         }
@@ -52,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
-            $stmt = $conn->prepare("DELETE FROM software_applications WHERE id = ?");
+            $stmt = $conn->prepare("DELETE FROM software_availability WHERE id = ?");
             if ($stmt) {
                 $stmt->bind_param('i', $id);
                 $stmt->execute();
@@ -91,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($lab === '' || $softwareName === '') continue;
                     if (!in_array($status, ['installed', 'unavailable'], true)) $status = 'installed';
 
-                    $stmt = $conn->prepare("INSERT INTO software_applications (lab, software_name, category, version, status) VALUES (?, ?, ?, ?, ?)");
+                    $stmt = $conn->prepare("INSERT INTO software_availability (lab, software_name, category, version, status) VALUES (?, ?, ?, ?, ?)");
                     if ($stmt) {
                         $stmt->bind_param('sssss', $lab, $softwareName, $category, $version, $status);
                         if ($stmt->execute()) $imported++;
@@ -104,6 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = $imported . ' software record(s) imported successfully.';
         }
     }
+    $_SESSION['software_flash_message'] = $message;
+    $_SESSION['software_flash_type'] = $messageType;
+
+    header('Location: Admin_Software.php');
+    exit;
 }
 
 $search = trim($_GET['search'] ?? '');
@@ -140,7 +146,20 @@ if ($statusFilter !== '') {
 
 $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 $softwareList = [];
-$stmt = $conn->prepare("SELECT * FROM software_applications $whereSql ORDER BY lab ASC, software_name ASC");
+$stmt = $conn->prepare("
+    SELECT 
+        id,
+        lab,
+        software_name,
+        category,
+        version,
+        status,
+        created_at,
+        created_at AS uploaded_at
+    FROM software_availability
+    $whereSql
+    ORDER BY lab ASC, software_name ASC
+");
 if ($stmt) {
     if ($params) $stmt->bind_param($types, ...$params);
     $stmt->execute();
@@ -149,7 +168,7 @@ if ($stmt) {
 }
 
 $labs = [];
-$result = $conn->query("SELECT DISTINCT lab FROM software_applications ORDER BY lab ASC");
+$result = $conn->query("SELECT DISTINCT lab FROM software_availability ORDER BY lab ASC");
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $labs[] = $row['lab'];
@@ -160,7 +179,7 @@ $totalApps = 0;
 $totalLabs = 0;
 $installedApps = 0;
 $unavailableApps = 0;
-$result = $conn->query("SELECT COUNT(*) AS total, COUNT(DISTINCT lab) AS labs, SUM(status = 'installed') AS installed, SUM(status = 'unavailable') AS unavailable FROM software_applications");
+$result = $conn->query("SELECT COUNT(*) AS total, COUNT(DISTINCT lab) AS labs, SUM(status = 'installed') AS installed, SUM(status = 'unavailable') AS unavailable FROM software_availability");
 if ($result && $row = $result->fetch_assoc()) {
     $totalApps = (int)$row['total'];
     $totalLabs = (int)$row['labs'];
@@ -320,7 +339,7 @@ if ($result && $row = $result->fetch_assoc()) {
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
-                  <tr><th class="ps-4">#</th><th>Lab</th><th>Software Name</th><th>Category</th><th>Version</th><th>Status</th><th>Uploaded</th><th class="pe-4">Action</th></tr>
+                  <tr><th class="ps-4">#</th><th>Lab</th><th>Software Name</th><th>Category</th><th>Version</th><th>Status</th><th>Created</th><th class="pe-4">Action</th></tr>
                 </thead>
                 <tbody>
                   <?php if (!$softwareList): ?>
@@ -334,7 +353,9 @@ if ($result && $row = $result->fetch_assoc()) {
                       <td><?= htmlspecialchars($software['category'] ?: 'N/A') ?></td>
                       <td><?= htmlspecialchars($software['version'] ?: 'N/A') ?></td>
                       <td><span class="badge text-bg-<?= $software['status'] === 'installed' ? 'success' : 'danger' ?>"><?= htmlspecialchars(ucfirst($software['status'])) ?></span></td>
-                      <td><?= htmlspecialchars($software['uploaded_at']) ?></td>
+                      <td>
+                          <?= !empty($software['uploaded_at']) ? date('M d, Y h:i A', strtotime($software['uploaded_at'])) : 'N/A' ?>
+                        </td>
                       <td class="pe-4">
                         <form method="POST" onsubmit="return confirm('Delete this software record?');">
                           <input type="hidden" name="action" value="delete">

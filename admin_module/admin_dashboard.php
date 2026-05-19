@@ -128,25 +128,38 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
           </div>
 
           <div class="announce-feed" id="announceList">
-            <div class="feed-item">
-              <div class="feed-top">
-                <div class="feed-avatar">CA</div>
-                <span class="feed-author">CCS Admin</span>
-                <span class="feed-date">Feb 11, 2026</span>
-              </div>
-              <div class="feed-body empty-body">No message content.</div>
-            </div>
+            <?php if (!empty($latest_announcements)): ?>
+              <?php foreach ($latest_announcements as $announcement): ?>
+                <div class="feed-item">
+                  <div class="feed-top">
+                    <div class="feed-avatar">CA</div>
+                    <span class="feed-author"><?= htmlspecialchars($announcement['posted_by'] ?: 'CCS Admin') ?></span>
+                    <span class="feed-date"><?= date('M d, Y', strtotime($announcement['created_at'])) ?></span>
+                  </div>
 
-            <div class="feed-item">
-              <div class="feed-top">
-                <div class="feed-avatar">CA</div>
-                <span class="feed-author">CCS Admin</span>
-                <span class="feed-date">May 8, 2024</span>
+                  <?php if (!empty($announcement['title'])): ?>
+                    <div style="font-weight:700; margin-bottom:4px; color:#111827;">
+                      <?= htmlspecialchars($announcement['title']) ?>
+                    </div>
+                  <?php endif; ?>
+
+                  <div class="feed-body">
+                    <?= nl2br(htmlspecialchars($announcement['message'])) ?>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <div class="feed-item">
+                <div class="feed-top">
+                  <div class="feed-avatar">CA</div>
+                  <span class="feed-author">CCS Admin</span>
+                  <span class="feed-date">Today</span>
+                </div>
+                <div class="feed-body empty-body">
+                  No announcements yet. Posted announcements from the database will appear here.
+                </div>
               </div>
-              <div class="feed-body">
-                Important Announcement: We are excited to announce the launch of our new website! 🌐 Explore our latest products and services now!
-              </div>
-            </div>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -433,6 +446,11 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
           `;
 
           const list = document.getElementById('announceList');
+
+          if (list.querySelector('.empty-body')) {
+            list.innerHTML = '';
+          }
+
           list.insertBefore(item, list.firstChild);
 
           document.getElementById('announceTitle').value = '';

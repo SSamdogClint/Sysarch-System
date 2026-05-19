@@ -1,5 +1,5 @@
 <?php
-// controllers/student/reset_sessions.php
+// controllers/sitin/reset_student_sessions.php
 // Compatibility wrapper for old pages.
 // Main reusable controller is controllers/session/reset_sessions.php.
 

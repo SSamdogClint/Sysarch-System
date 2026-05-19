@@ -60,7 +60,7 @@ for ($i = 1; $i <= $total_pc; $i++) {
 }
 
 // Mark unavailable PCs from maintenance table.
-$stmt = $conn->prepare("SELECT pc_number FROM lab_pc_status WHERE lab = ? AND status = 'unavailable'");
+$stmt = $conn->prepare("SELECT pc_number FROM lab_computers WHERE lab = ? AND status = 'unavailable'");
 $stmt->bind_param('s', $lab);
 $stmt->execute();
 $res = $stmt->get_result();

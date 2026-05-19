@@ -13,15 +13,55 @@ if (empty($_SESSION['admin_logged_in'])) {
 }
 
 require_once '../config/db_config.php';
+require_once __DIR__ . '/../includes/reset_session_component.php';
 
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
 $add_errors  = $_SESSION['add_errors']  ?? [];
 $add_success = $_SESSION['add_success'] ?? '';
 unset($_SESSION['add_errors'], $_SESSION['add_success']);
 
+function studentListTableExists(mysqli $conn, string $tableName): bool
+{
+    $stmt = $conn->prepare("
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = ?
+    ");
+
+    if (!$stmt) {
+        return false;
+    }
+
+    $stmt->bind_param('s', $tableName);
+    $stmt->execute();
+
+    $count = 0;
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    return (int)$count > 0;
+}
+
+$session_reset_logs = [];
+
+if (studentListTableExists($conn, 'session_reset_logs')) {
+    $reset_result = $conn->query("
+        SELECT reset_title, total_students, total_credits_before, total_credits_after, reset_by, created_at
+        FROM session_reset_logs
+        ORDER BY created_at DESC
+        LIMIT 5
+    ");
+
+    if ($reset_result) {
+        $session_reset_logs = $reset_result->fetch_all(MYSQLI_ASSOC);
+    }
+}
+
 // Fetch all students
 $result   = $conn->query('SELECT id, studentid, lastname, firstname, middlename, course, yearlvl, session_credits FROM students ORDER BY lastname ASC');
-$students = $result->fetch_all(MYSQLI_ASSOC);
+$students = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -37,6 +77,60 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
   
+
+  <style>
+    .reset-title-input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 13px;
+      font-size: 13px;
+      font-family: 'Poppins', sans-serif;
+      outline: none;
+      color: #111827;
+    }
+
+    .reset-title-input:focus {
+      border-color: #d97706;
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+    }
+
+    .reset-warning-card {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .recent-reset-list {
+      max-height: 170px;
+      overflow-y: auto;
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .recent-reset-item {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #374151;
+    }
+
+    .recent-reset-title {
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 2px;
+    }
+  </style>
+
+  <link rel="stylesheet" href="../assets/css/admin_table_tools.css">
 </head>
 <body class="admin-student-list-page">
 
@@ -100,7 +194,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
 
         <!-- Table -->
         <div style="overflow-x:auto;">
-          <table class="student-table" id="studentTable">
+          <table class="student-table js-admin-table" id="studentTable">
             <thead>
               <tr>
                 <th>#</th>
@@ -158,10 +252,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Student
           </button>
-          <button class="btn-reset" onclick="openResetConfirm()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.63"/></svg>
-            Reset All Sessions
-          </button>
+          <?php renderResetSessionButton('Reset All Sessions', 'btn-reset'); ?>
         </div>
 
       </div>
@@ -199,35 +290,7 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
     </div>
   </div>
 
-  <!-- ═══ RESET CONFIRM MODAL ═══ -->
-  <div id="resetModal" style="
-    display:none; position:fixed; inset:0; z-index:999;
-    background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
-    <div class="confirm-modal-box">
-      <div style="background:#d97706;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:14px;font-weight:600;">🔄 Reset All Sessions</span>
-        <button onclick="closeResetModal()" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;">✕</button>
-      </div>
-      <div style="padding:20px 24px;">
-        <p style="font-size:13px;color:#374151;margin-bottom:16px;">This will reset all students' session credits back to <strong>30</strong>. Use this at the start of every new semester.</p>
-        <p style="font-size:12px;color:#6b7280;margin-bottom:20px;">Are you sure you want to continue?</p>
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button onclick="closeResetModal()" style="
-            padding:9px 20px;border:1px solid #d1d5db;border-radius:8px;
-            background:#fff;font-size:13px;font-weight:500;
-            font-family:'Poppins',sans-serif;cursor:pointer;color:#374151;">
-            Cancel
-          </button>
-          <button onclick="resetAllSessions()" style="
-            padding:9px 20px;background:#d97706;color:#fff;border:none;
-            border-radius:8px;font-size:13px;font-weight:600;
-            font-family:'Poppins',sans-serif;cursor:pointer;">
-            Yes, Reset All
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <?php renderResetSessionModal($conn, '../controllers/session/reset_sessions.php'); ?>
 
   <!-- TOAST -->
   <div id="toast"></div>
@@ -795,26 +858,80 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
 
     // ── Reset sessions ──
     function openResetConfirm() {
-      document.getElementById('resetModal').style.display = 'flex';
+      const modal = document.getElementById('resetModal');
+      const input = document.getElementById('resetSessionTitle');
+      const error = document.getElementById('resetSessionError');
+
+      if (input && !input.value.trim()) {
+        const now = new Date();
+        input.value = 'Session Reset - ' + now.toLocaleDateString('en-PH', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+
+      if (error) {
+        error.textContent = '';
+        error.style.display = 'none';
+      }
+
+      modal.style.display = 'flex';
     }
 
     function closeResetModal() {
-      document.getElementById('resetModal').style.display = 'none';
+      const modal = document.getElementById('resetModal');
+      const btn = document.getElementById('confirmResetBtn');
+
+      modal.style.display = 'none';
+
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Yes, Reset All';
+      }
     }
 
     function resetAllSessions() {
-      fetch('../controllers/student/reset_sessions.php', { method: 'POST' })
+      const titleInput = document.getElementById('resetSessionTitle');
+      const error = document.getElementById('resetSessionError');
+      const btn = document.getElementById('confirmResetBtn');
+      const title = titleInput ? titleInput.value.trim() : '';
+
+      if (!title) {
+        if (error) {
+          error.textContent = 'Please enter a reset title.';
+          error.style.display = 'block';
+        }
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Resetting...';
+      }
+
+      const fd = new FormData();
+      fd.append('reset_title', title);
+
+      fetch('../controllers/student/reset_sessions.php', {
+        method: 'POST',
+        body: fd
+      })
         .then(res => res.json())
         .then(data => {
           closeResetModal();
+
           if (data.success) {
-            showToast('All sessions reset to 30!', '#d97706');
+            showToast(data.message || 'All sessions reset to 30!', '#d97706');
             setTimeout(() => location.reload(), 1200);
           } else {
             showToast(data.message || 'Failed to reset.', '#dc2626');
           }
         })
-        .catch(() => showToast('Something went wrong.', '#dc2626'));
+        .catch(() => {
+          closeResetModal();
+          showToast('Something went wrong while resetting sessions.', '#dc2626');
+        });
     }
 
     // ── Toast ──
@@ -1040,5 +1157,6 @@ $students = $result->fetch_all(MYSQLI_ASSOC);
     });
     
   </script>
+  <script src="../assets/js/admin_table_tools.js"></script>
 </body>
 </html>

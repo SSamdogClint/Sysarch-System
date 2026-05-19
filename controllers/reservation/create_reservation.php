@@ -88,7 +88,7 @@ if (!$student || (int)$student['session_credits'] <= 0) {
 }
 
 // Check if PC is unavailable
-$stmt = $conn->prepare("SELECT id FROM lab_pc_status WHERE lab = ? AND pc_number = ? AND status = 'unavailable' LIMIT 1");
+$stmt = $conn->prepare("SELECT id FROM lab_computers WHERE lab = ? AND pc_number = ? AND status = 'unavailable' LIMIT 1");
 $stmt->bind_param('si', $lab, $pc);
 $stmt->execute();
 $unavailable = $stmt->get_result()->fetch_assoc();

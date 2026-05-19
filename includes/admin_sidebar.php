@@ -62,6 +62,21 @@ function admin_sidebar_active_open(string $page, string $open): string
 
   <hr class="sidebar-divider">
 
+  <div class="sidebar-section">Analytics</div>
+
+  <a class="sidebar-link<?= admin_sidebar_active('Admin_Analytics.php') ?>" href="Admin_Analytics.php">
+    <i class="bi bi-graph-up-arrow"></i>
+    <span>Analytics</span>
+  </a>
+
+
+  <a href="Admin_Rewards.php" class="sidebar-link <?= basename($_SERVER['PHP_SELF']) === 'Admin_Rewards.php' ? 'active' : '' ?>">
+    <i class="bi bi-trophy"></i>
+    <span>Rewards / Points</span>
+  </a>
+
+  <hr class="sidebar-divider">
+
   <div class="sidebar-section">Reports & Tools</div>
 
   <a class="sidebar-link<?= admin_sidebar_active('Admin_Reports.php') ?>" href="Admin_Reports.php">

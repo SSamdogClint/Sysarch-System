@@ -143,7 +143,7 @@ if ($action === 'enable') {
 
     $stmt = $conn->prepare("
         SELECT id
-        FROM lab_pc_status
+        FROM lab_computers
         WHERE lab = ?
           AND pc_number = ?
           AND status = 'unavailable'

@@ -113,6 +113,7 @@ function shortText($text, $limit = 120) {
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../assets/css/admin_table_tools.css">
 </head>
 <body class="admin-dashboard-page">
   <nav class="uc-nav">
@@ -215,7 +216,7 @@ function shortText($text, $limit = 120) {
           </div>
           <div class="card-body p-0">
             <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
+              <table class="table table-hover align-middle mb-0 js-admin-table">
                 <thead class="table-light">
                   <tr><th class="ps-4">#</th><th>Student</th><th>Rating</th><th>Message</th><th>Date</th><th class="pe-4">Action</th></tr>
                 </thead>
@@ -267,5 +268,6 @@ function shortText($text, $limit = 120) {
       });
     }
   </script>
+  <script src="../assets/js/admin_table_tools.js"></script>
 </body>
 </html>

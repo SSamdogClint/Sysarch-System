@@ -25,6 +25,48 @@ $initials   = strtoupper(substr($firstname, 0, 1) . substr($lastname, 0, 1));
 
 require_once '../controllers/announcements/student_notifications.php';
 
+$softwareByLab = [];
+
+$softwareTableCheck = $conn->prepare("
+    SELECT COUNT(*) AS total
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'software_availability'
+");
+
+if ($softwareTableCheck) {
+    $softwareTableCheck->execute();
+    $softwareTableResult = $softwareTableCheck->get_result();
+    $softwareTableRow = $softwareTableResult ? $softwareTableResult->fetch_assoc() : null;
+    $softwareTableCheck->close();
+
+    if ((int)($softwareTableRow['total'] ?? 0) > 0) {
+        $softwareResult = $conn->query("
+            SELECT lab, software_name, category, version, status
+            FROM software_availability
+            ORDER BY lab ASC, software_name ASC
+        ");
+
+        if ($softwareResult) {
+            while ($software = $softwareResult->fetch_assoc()) {
+                $labName = $software['lab'];
+
+                if (!isset($softwareByLab[$labName])) {
+                    $softwareByLab[$labName] = [];
+                }
+
+                $softwareByLab[$labName][] = [
+                    'software_name' => $software['software_name'],
+                    'category' => $software['category'],
+                    'version' => $software['version'],
+                    'status' => $software['status']
+                ];
+            }
+        }
+    }
+}
+
+
 $reservations = [];
 
 $stmt = $conn->prepare("
@@ -303,7 +345,7 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
 
             <div class="field">
               <label for="lab">Laboratory</label>
-              <select id="lab" name="lab" onchange="loadSeats()">
+              <select id="lab" name="lab" onchange="handleLabChange()">
                 <option value="Lab 524">Lab 524</option>
                 <option value="Lab 526">Lab 526</option>
                 <option value="Lab 528">Lab 528</option>
@@ -311,6 +353,26 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
                 <option value="Lab 542">Lab 542</option>
                 <option value="Lab 544">Lab 544</option>
               </select>
+            </div>
+
+            <div class="field">
+              <div class="card border shadow-sm">
+                <div class="card-header bg-white py-2 px-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <strong style="font-size:13px;">
+                      <i class="bi bi-window-stack me-1 text-primary"></i>
+                      Software Availability
+                    </strong>
+                    <span class="badge text-bg-primary" id="softwareCountBadge">0 apps</span>
+                  </div>
+                </div>
+
+                <div class="card-body p-3">
+                  <div id="selectedLabSoftware" class="d-grid gap-2" style="max-height:220px; overflow-y:auto; padding-right:4px;">
+                    <div class="text-muted small">Select a laboratory to view available software.</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="field">
@@ -675,12 +737,82 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
     localStorage.setItem('uc_dark_mode', enabled ? 'enabled' : 'disabled');
 
     applyDarkMode();
+    renderSoftwareAvailability();
   }
 
   applyDarkMode();
 
   const pcGrid = document.getElementById('pcGrid');
   const reserveBtn = document.getElementById('reserveBtn');
+  const softwareByLab = <?= json_encode($softwareByLab, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+
+  function renderSoftwareAvailability() {
+    const labSelect = document.getElementById('lab');
+    const softwareContainer = document.getElementById('selectedLabSoftware');
+    const softwareCountBadge = document.getElementById('softwareCountBadge');
+
+    if (!labSelect || !softwareContainer || !softwareCountBadge) {
+      return;
+    }
+
+    const selectedLab = labSelect.value;
+    const softwareList = softwareByLab[selectedLab] || [];
+
+    softwareContainer.innerHTML = '';
+    softwareCountBadge.textContent = softwareList.length + ' apps';
+
+    if (!softwareList.length) {
+      const empty = document.createElement('div');
+      empty.className = 'text-muted small';
+      empty.textContent = 'No software records found for ' + selectedLab + '.';
+      softwareContainer.appendChild(empty);
+      return;
+    }
+
+    softwareList.forEach(app => {
+      const item = document.createElement('div');
+      item.className = 'border rounded-3 p-2 software-item';
+      item.style.background = document.body.classList.contains('dark-mode') ? '#0f172a' : '#f8fafc';
+
+      const top = document.createElement('div');
+      top.className = 'd-flex justify-content-between align-items-start gap-2';
+
+      const nameBox = document.createElement('div');
+
+      const name = document.createElement('div');
+      name.className = 'fw-semibold';
+      name.style.fontSize = '13px';
+      name.textContent = app.software_name || 'Unnamed Software';
+
+      const details = document.createElement('div');
+      details.className = 'text-muted small';
+      details.textContent = (app.category || 'No category') + ' · Version: ' + (app.version || 'N/A');
+
+      nameBox.appendChild(name);
+      nameBox.appendChild(details);
+
+      const badge = document.createElement('span');
+      const status = (app.status || 'installed').toLowerCase();
+
+      badge.className = status === 'installed'
+        ? 'badge text-bg-success'
+        : 'badge text-bg-danger';
+
+      badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+
+      top.appendChild(nameBox);
+      top.appendChild(badge);
+
+      item.appendChild(top);
+      softwareContainer.appendChild(item);
+    });
+  }
+
+  function handleLabChange() {
+    renderSoftwareAvailability();
+    loadSeats();
+  }
+
 
   const navToggler = document.getElementById('navToggler');
 
@@ -1059,7 +1191,7 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
       });
   }
 
-  loadSeats();
+  handleLabChange();
 </script>
 </body>
 </html>
