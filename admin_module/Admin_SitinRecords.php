@@ -496,6 +496,14 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
       });
     }
 
+
+    function displaySession(value) {
+      if (value === null || value === undefined || value === '' || value === 0 || value === '0') {
+        return '—';
+      }
+      return escapeHTML(value);
+    }
+
     // ── Active tab ──
     function renderActive() {
       const tbody = document.getElementById('activeBody');
@@ -519,7 +527,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
             <td>${escapeHTML(r.purpose)}</td>
             <td>${escapeHTML(r.lab)}</td>
             <td>${r.pc_number ? 'PC ' + escapeHTML(r.pc_number) : '—'}</td>
-            <td><span class="badge-session">${escapeHTML(r.session_at_sitin)}</span></td>
+            <td><span class="badge-session">${displaySession(r.session_at_sitin)}</span></td>
             <td style="font-size:12px;color:#6b7280;">${formatDate(r.login_time)}</td>
             <td><span class="badge-status active">Active</span></td>
             <td>
@@ -554,7 +562,7 @@ $done_records = $result_done->fetch_all(MYSQLI_ASSOC);
             <td>${escapeHTML(r.purpose)}</td>
             <td>${escapeHTML(r.lab)}</td>
             <td>${r.pc_number ? 'PC ' + escapeHTML(r.pc_number) : '—'}</td>
-            <td><span class="badge-session">${escapeHTML(r.session_at_sitin)}</span></td>
+            <td><span class="badge-session">${displaySession(r.session_at_sitin)}</span></td>
             <td style="font-size:12px;color:#6b7280;">${formatDate(r.login_time)}</td>
             <td><span class="badge-status done">Done</span></td>
             <td>

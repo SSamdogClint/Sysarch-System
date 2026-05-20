@@ -469,7 +469,7 @@ $students = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
               color:#111827;background:#fff;">
               <option value="">-- Select Lab --</option>
               <option value="Lab 524">Lab 524</option>
-              <option value="Lab 524">Lab 526</option>
+              <option value="Lab 526">Lab 526</option>
               <option value="Lab 528">Lab 528</option>
               <option value="Lab 530">Lab 530</option>
               <option value="Lab 542">Lab 542</option>
@@ -794,7 +794,7 @@ $students = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
         .then(data => {
           document.getElementById('editLoadingMsg').style.display = 'none';
           if (!data.success) {
-            alert('Failed to load student data.');
+            appAlert('Failed to load student data.', 'Student Data', 'danger');
             closeEditModal();
             return;
           }
@@ -810,7 +810,7 @@ $students = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
           document.getElementById('editAddrs').value      = s.addrs;
         })
         .catch(() => {
-          alert('Something went wrong loading student data.');
+          appAlert('Something went wrong loading student data.', 'Student Data', 'danger');
           closeEditModal();
         });
     }
@@ -1148,8 +1148,12 @@ $students = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 
     document.addEventListener('DOMContentLoaded', function () {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('open') === 'search' && typeof openSearchModal === 'function') {
-        openSearchModal();
+      if (params.get('open') === 'search') {
+        if (typeof openGlobalAdminSearchModal === 'function') {
+          openGlobalAdminSearchModal();
+        } else if (typeof openSearchModal === 'function') {
+          openSearchModal();
+        }
       }
       if (params.get('open') === 'sitin' && typeof openSitinModal === 'function') {
         openSitinModal();

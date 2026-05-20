@@ -62,8 +62,64 @@ function notificationLabel(string $type): string
         'reservation_late_cancelled' => 'Reservation',
         'reservation_done' => 'Reservation',
         'sitin_registered' => 'Session',
-        'session' => 'Session'
+        'session' => 'Session',
+        'reward' => 'Reward',
+        'software' => 'Software',
+        'testimonial' => 'Testimonial',
+        'feedback' => 'Feedback',
+        'notification' => 'Notification'
     ];
 
     return $labels[$type] ?? 'Notification';
+}
+
+/**
+ * Returns the best student page to open when a notification is clicked.
+ * This keeps the notification bell/page useful without storing extra URLs in the database.
+ */
+function notificationTargetUrl(string $type): string
+{
+    $type = strtolower(trim($type));
+
+    if ($type === 'announcement') {
+        return 'announcements.php';
+    }
+
+    if (in_array($type, ['reservation_submitted'], true)) {
+        return 'reservation.php#pending-reservations';
+    }
+
+    if (in_array($type, ['reservation_approved', 'reservation_done'], true)) {
+        return 'reservation.php#approved-reservations';
+    }
+
+    if (in_array($type, ['reservation_cancelled', 'reservation_late_cancelled'], true)) {
+        return 'reservation.php#cancelled-reservations';
+    }
+
+    if ($type === 'reservation_rejected') {
+        return 'reservation.php#all-reservations';
+    }
+
+    if (in_array($type, ['sitin_registered', 'session'], true)) {
+        return 'session_table.php';
+    }
+
+    if ($type === 'reward') {
+        return 'rewards.php';
+    }
+
+    if ($type === 'software') {
+        return 'software_availability.php';
+    }
+
+    if ($type === 'testimonial') {
+        return 'testimonials.php';
+    }
+
+    if ($type === 'feedback') {
+        return 'sitin_history.php';
+    }
+
+    return 'notifications.php';
 }

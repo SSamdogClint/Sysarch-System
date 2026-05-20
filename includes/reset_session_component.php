@@ -358,7 +358,7 @@ if (!function_exists('renderResetSessionModal')) {
             const toast = document.getElementById('reusableResetToast');
 
             if (!toast) {
-              alert(message);
+              appAlert(message, 'Reset Sessions', color === '#059669' ? 'success' : 'danger');
               return;
             }
 

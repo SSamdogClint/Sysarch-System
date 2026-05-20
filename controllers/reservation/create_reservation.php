@@ -60,18 +60,22 @@ if (strlen($end_time) === 5) {
     $end_time .= ':00';
 }
 
-if (strtotime($end_time) <= strtotime($time)) {
+$startDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $date . ' ' . $time);
+$endDateTime   = DateTime::createFromFormat('Y-m-d H:i:s', $date . ' ' . $end_time);
+$nowDateTime   = new DateTime('now');
+
+if (!$startDateTime || !$endDateTime) {
+    echo json_encode(['success' => false, 'message' => 'Invalid reservation date or time.']);
+    exit;
+}
+
+if ($endDateTime <= $startDateTime) {
     echo json_encode(['success' => false, 'message' => 'End time must be later than start time.']);
     exit;
 }
 
-if ($date < date('Y-m-d')) {
-    echo json_encode(['success' => false, 'message' => 'Reservation date cannot be in the past.']);
-    exit;
-}
-
-if ($date === date('Y-m-d') && strtotime($end_time) <= strtotime(date('H:i:s'))) {
-    echo json_encode(['success' => false, 'message' => 'Reservation end time has already passed.']);
+if ($startDateTime <= $nowDateTime) {
+    echo json_encode(['success' => false, 'message' => 'Reservation start time cannot be in the past. Please choose a later time.']);
     exit;
 }
 

@@ -1289,4 +1289,26 @@ FROM (
   ORDER BY final_score DESC
 ) ranked;
 
+
+
+-- Make sure mock sit-in records always show a session number in Sit-in Records/History.
+-- This fixes old mock records where session_at_sitin was NULL.
+SET @prev_student := NULL;
+SET @session_no := 31;
+UPDATE sitin_records s
+JOIN (
+  SELECT ordered.id,
+         @session_no := IF(@prev_student = ordered.student_id, @session_no - 1, 30) AS computed_session,
+         @prev_student := ordered.student_id AS student_marker
+  FROM (
+    SELECT id, student_id, login_time
+    FROM sitin_records
+    WHERE session_at_sitin IS NULL
+    ORDER BY student_id, login_time ASC, id ASC
+  ) ordered
+  CROSS JOIN (SELECT @prev_student := NULL, @session_no := 31) vars
+) fixed ON fixed.id = s.id
+SET s.session_at_sitin = GREATEST(fixed.computed_session, 1)
+WHERE s.session_at_sitin IS NULL;
+
 SET FOREIGN_KEY_CHECKS = 1;

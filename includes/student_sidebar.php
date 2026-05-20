@@ -34,6 +34,11 @@ function student_sidebar_active(string $page): string
     Announcements
   </a>
 
+  <a class="sidebar-link<?= student_sidebar_active('notifications.php') ?>" href="notifications.php">
+    <i class="bi bi-bell"></i>
+    <span>Notifications</span>
+  </a>
+
   <a class="sidebar-link<?= student_sidebar_active('session_table.php') ?>" href="session_table.php">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     Session Table
@@ -63,3 +68,5 @@ function student_sidebar_active(string $page): string
     Testimonials
   </a>
 </aside>
+
+<script src="../assets/js/app_modal.js"></script>

@@ -74,18 +74,23 @@ require_once '../controllers/announcements/student_notifications.php';
 
           <?php if (!empty($notifications)): ?>
             <?php foreach ($notifications as $notif): ?>
-              <div class="notif-menu-item">
+              <a class="notif-menu-item" href="<?= htmlspecialchars($notif['url'] ?? 'notifications.php') ?>">
                 <div class="notif-type <?= htmlspecialchars($notif['type']) ?>">
                   <?= htmlspecialchars($notif['label'] ?? ($notif['type'] === 'announcement' ? 'Announcement' : 'Session')) ?>
                 </div>
                 <div class="notif-title"><?= htmlspecialchars($notif['title']) ?></div>
                 <div class="notif-text"><?= htmlspecialchars($notif['message']) ?></div>
                 <div class="notif-time"><?= date('M d, Y h:i A', strtotime($notif['created_at'])) ?></div>
-              </div>
+              </a>
             <?php endforeach; ?>
           <?php else: ?>
             <div class="notif-empty">No notifications yet.</div>
           <?php endif; ?>
+
+          <a class="notif-menu-footer" href="notifications.php">
+            View all notifications
+            <i class="bi bi-arrow-right-short"></i>
+          </a>
         </div>
       </div>
 

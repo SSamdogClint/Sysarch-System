@@ -614,18 +614,23 @@ $chart_data = [
           <div class="notif-menu-header">Notifications</div>
           <?php if (!empty($notifications)): ?>
             <?php foreach ($notifications as $notif): ?>
-              <div class="notif-menu-item">
+              <a class="notif-menu-item" href="<?= htmlspecialchars($notif['url'] ?? 'notifications.php') ?>">
                 <div class="notif-type <?= htmlspecialchars($notif['type']) ?>">
                   <?= htmlspecialchars($notif['label'] ?? ($notif['type'] === 'announcement' ? 'Announcement' : 'Session')) ?>
                 </div>
                 <div class="notif-title"><?= htmlspecialchars($notif['title']) ?></div>
                 <div class="notif-text"><?= htmlspecialchars($notif['message']) ?></div>
                 <div class="notif-time"><?= date('M d, Y h:i A', strtotime($notif['created_at'])) ?></div>
-              </div>
+              </a>
             <?php endforeach; ?>
           <?php else: ?>
             <div class="notif-empty">No notifications yet.</div>
           <?php endif; ?>
+
+          <a class="notif-menu-footer" href="notifications.php">
+            View all notifications
+            <i class="bi bi-arrow-right-short"></i>
+          </a>
         </div>
       </div>
 
@@ -1215,6 +1220,14 @@ $chart_data = [
       .replace(/'/g, '&#039;');
   }
 
+
+  function displaySession(value) {
+    if (value === null || value === undefined || value === '' || value === 0 || value === '0') {
+      return '—';
+    }
+    return escapeHtml(value);
+  }
+
   function formatTime(dt) {
     return new Date(dt).toLocaleString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true });
   }
@@ -1315,7 +1328,7 @@ $chart_data = [
             </div>
             <div class="timeline-field">
               <span class="timeline-field-label">Session</span>
-              <span class="timeline-field-value"><span class="badge-session">${escapeHtml(r.session_at_sitin)}</span></span>
+              <span class="timeline-field-value"><span class="badge-session">${displaySession(r.session_at_sitin)}</span></span>
             </div>
           </div>`;
 

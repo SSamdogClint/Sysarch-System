@@ -301,7 +301,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
             >
               <option value="">-- Select Lab --</option>
               <option value="Lab 524">Lab 524</option>
-              <option value="Lab 524">Lab 526</option>
+              <option value="Lab 526">Lab 526</option>
               <option value="Lab 528">Lab 528</option>
               <option value="Lab 530">Lab 530</option>
               <option value="Lab 542">Lab 542</option>
@@ -412,7 +412,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
       const text = document.getElementById('announceText').value.trim();
 
       if (!text) {
-        alert('Please enter an announcement.');
+        appAlert('Please enter an announcement.', 'Announcement', 'warning');
         return;
       }
 
@@ -427,7 +427,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
         .then(res => res.json())
         .then(data => {
           if (!data.success) {
-            alert(data.message || 'Failed to post announcement.');
+            appAlert(data.message || 'Failed to post announcement.', 'Announcement', 'danger');
             return;
           }
 
@@ -460,7 +460,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Administrator');
           document.getElementById('postCountLabel').textContent = `${currentCount} posted`;
         })
         .catch(() => {
-          alert('Something went wrong. Please try again.');
+          appAlert('Something went wrong. Please try again.', 'Announcement', 'danger');
         });
     }
 

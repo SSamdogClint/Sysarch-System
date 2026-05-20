@@ -37,12 +37,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $status = 'installed';
             }
 
-            $stmt = $conn->prepare("INSERT INTO software_availability (lab, software_name, category, version, status) VALUES (?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("
+                INSERT INTO software_availability (lab, software_name, category, version, status)
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    category = VALUES(category),
+                    version = VALUES(version),
+                    status = VALUES(status)
+            ");
             if ($stmt) {
                 $stmt->bind_param('sssss', $lab, $softwareName, $category, $version, $status);
                 $stmt->execute();
+                $affectedRows = $stmt->affected_rows;
                 $stmt->close();
-                $message = 'Software application added successfully.';
+                $message = ($affectedRows === 2)
+                    ? 'Software application already existed, so its details were updated.'
+                    : 'Software application added successfully.';
             } else {
                 $message = 'Unable to add software. Please check the software_availability table.';
                 $messageType = 'danger';
@@ -70,12 +80,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $handle = fopen($_FILES['csv_file']['tmp_name'], 'r');
             $imported = 0;
+            $updated = 0;
+            $skipped = 0;
 
             if ($handle) {
                 $rowNumber = 0;
                 while (($row = fgetcsv($handle)) !== false) {
                     $rowNumber++;
-                    if (count($row) < 2) continue;
+                    if (count($row) < 2) {
+                            $skipped++;
+                            continue;
+                        }
 
                     $firstCell = strtolower(trim($row[0] ?? ''));
                     $secondCell = strtolower(trim($row[1] ?? ''));
@@ -89,20 +104,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $version = trim($row[3] ?? '');
                     $status = strtolower(trim($row[4] ?? 'installed'));
 
-                    if ($lab === '' || $softwareName === '') continue;
+                    if ($lab === '' || $softwareName === '') {
+                            $skipped++;
+                            continue;
+                        }
                     if (!in_array($status, ['installed', 'unavailable'], true)) $status = 'installed';
 
-                    $stmt = $conn->prepare("INSERT INTO software_availability (lab, software_name, category, version, status) VALUES (?, ?, ?, ?, ?)");
+                    $stmt = $conn->prepare("
+                        INSERT INTO software_availability (lab, software_name, category, version, status)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON DUPLICATE KEY UPDATE
+                            category = VALUES(category),
+                            version = VALUES(version),
+                            status = VALUES(status)
+                    ");
                     if ($stmt) {
                         $stmt->bind_param('sssss', $lab, $softwareName, $category, $version, $status);
-                        if ($stmt->execute()) $imported++;
+                        $stmt->execute();
+
+                        if ($stmt->affected_rows === 1) {
+                            $imported++;
+                        } elseif ($stmt->affected_rows === 2) {
+                            $updated++;
+                        } else {
+                            // affected_rows can be 0 when the duplicate row is exactly the same.
+                            $skipped++;
+                        }
+
                         $stmt->close();
+                    } else {
+                        $skipped++;
                     }
                 }
                 fclose($handle);
             }
 
-            $message = $imported . ' software record(s) imported successfully.';
+            $message = $imported . ' new software record(s) imported, ' . $updated . ' existing record(s) updated, and ' . $skipped . ' duplicate/invalid row(s) skipped.';
         }
     }
     $_SESSION['software_flash_message'] = $message;
@@ -274,6 +311,15 @@ if ($result && $row = $result->fetch_assoc()) {
                 <small class="text-muted">Format: lab, software_name, category, version, status</small>
               </div>
               <div class="card-body p-4">
+                <div class="alert alert-info border-0 shadow-sm mb-3" style="background:#eff6ff;color:#1e3a8a;">
+                  <div class="fw-bold mb-1"><i class="bi bi-info-circle me-1"></i>CSV Upload Note</div>
+                  <div class="small mb-2">Use the sample format below so you do not need to manually create a CSV file during presentation.</div>
+                  <a class="btn btn-sm btn-outline-primary" href="../database/software_import_sample.csv" download>
+                    <i class="bi bi-download me-1"></i>Download example CSV file
+                  </a>
+                  <div class="small mt-2">Required columns: <code>lab, software_name, category, version, status</code></div>
+                </div>
+
                 <form method="POST" enctype="multipart/form-data" class="row g-3">
                   <input type="hidden" name="action" value="import">
                   <div class="col-12">
@@ -357,7 +403,7 @@ if ($result && $row = $result->fetch_assoc()) {
                           <?= !empty($software['uploaded_at']) ? date('M d, Y h:i A', strtotime($software['uploaded_at'])) : 'N/A' ?>
                         </td>
                       <td class="pe-4">
-                        <form method="POST" onsubmit="return confirm('Delete this software record?');">
+                        <form method="POST" data-confirm-message="Delete this software record?" data-confirm-title="Delete Confirmation" data-confirm-type="danger" data-confirm-ok="Yes, Delete">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="id" value="<?= (int)$software['id'] ?>">
                           <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>

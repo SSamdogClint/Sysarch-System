@@ -936,6 +936,10 @@ $reservation_json = json_encode($reservations, JSON_HEX_TAG | JSON_HEX_APOS | JS
         formData.append('purpose', purpose);
         formData.append('lab', lab);
 
+        if (selectedReservationIdForSitin && selectedSeat && selectedSeat.pc_number) {
+          formData.append('pc_number', selectedSeat.pc_number);
+        }
+
         fetch('../controllers/sitin/register_sitin.php', {
           method: 'POST',
           body: formData

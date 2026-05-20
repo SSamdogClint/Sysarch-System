@@ -1,8 +1,13 @@
 lab,software_name,category,version,status
-Lab 524,Visual Studio Code,Programming,1.90,installed
-Lab 524,XAMPP,Web Development,8.2,installed
-Lab 526,Python,Programming,3.12,installed
-Lab 528,Android Studio,Mobile Development,Koala,installed
-Lab 530,NetBeans,Programming,21,installed
-Lab 542,MySQL Workbench,Database,8.0,installed
-Lab 544,Code::Blocks,Programming,20.03,installed
+Lab 524,NetBeans IDE,Programming,22,installed
+Lab 524,Sublime Text,Text Editor,4,installed
+Lab 526,Docker Desktop,Development Tools,Latest,installed
+Lab 526,MongoDB Compass,Database,1.44,installed
+Lab 528,IntelliJ IDEA Community,Programming,2025.1,installed
+Lab 528,PostgreSQL pgAdmin,Database,8.0,installed
+Lab 530,Nmap,Networking,7.95,installed
+Lab 530,Advanced IP Scanner,Networking,Latest,installed
+Lab 542,Blender,Multimedia,4.3,installed
+Lab 542,Inkscape,Design,1.4,installed
+Lab 544,Azure Data Studio,Database,Latest,installed
+Lab 544,FileZilla,Networking,3.67,installed

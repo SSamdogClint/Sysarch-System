@@ -1,6 +1,9 @@
 <?php
 // config/db_config.php
 
+// Important for reservation time validation in the Philippines.
+date_default_timezone_set('Asia/Manila');
+
 define('ROOT_PATH', dirname(__DIR__, 1)); // points to project root
 
 define('DB_HOST', 'localhost');

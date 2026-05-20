@@ -37,7 +37,8 @@ if ($announcement_result) {
             'label' => notificationLabel('announcement'),
             'title' => $row['title'] ?: 'New announcement',
             'message' => $row['message'] ?: '',
-            'created_at' => $row['created_at']
+            'created_at' => $row['created_at'],
+            'url' => notificationTargetUrl('announcement')
         ];
     }
 }
@@ -58,12 +59,14 @@ if ($student_id > 0 && notificationsTableExists($conn)) {
         $notif_result = $notif_stmt->get_result();
 
         while ($row = $notif_result->fetch_assoc()) {
+            $notificationType = $row['type'] ?: 'notification';
             $notifications[] = [
-                'type' => $row['type'] ?: 'notification',
-                'label' => notificationLabel($row['type'] ?: 'notification'),
+                'type' => $notificationType,
+                'label' => notificationLabel($notificationType),
                 'title' => $row['title'] ?: 'New notification',
                 'message' => $row['message'] ?: '',
-                'created_at' => $row['created_at']
+                'created_at' => $row['created_at'],
+                'url' => notificationTargetUrl($notificationType)
             ];
         }
 
@@ -94,7 +97,8 @@ if ($student_id > 0 && notificationsTableExists($conn)) {
                 'title' => 'New session assigned',
                 'message' => 'A sit-in session for ' . ($row['purpose'] ?? 'Unknown Purpose') .
                              ' in ' . ($row['lab'] ?? 'Unknown Lab') . ' is now active.',
-                'created_at' => $row['login_time']
+                'created_at' => $row['login_time'],
+                'url' => notificationTargetUrl('session')
             ];
         }
 

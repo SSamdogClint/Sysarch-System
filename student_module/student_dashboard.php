@@ -20,6 +20,7 @@ require_once __DIR__ . '/../controllers/announcements/student_notifications.php'
 
 $firstname  = htmlspecialchars($_SESSION['firstname'] ?? '');
 $lastname   = htmlspecialchars($_SESSION['lastname'] ?? '');
+$middlename = htmlspecialchars($_SESSION['middlename'] ?? '');
 $course     = htmlspecialchars($_SESSION['course'] ?? '');
 $yearlvl    = htmlspecialchars($_SESSION['yearlvl'] ?? '');
 $email      = htmlspecialchars($_SESSION['email'] ?? '');
@@ -337,18 +338,23 @@ if (tableExists($conn, 'testimonials')) {
 
           <?php if (!empty($notifications)): ?>
             <?php foreach ($notifications as $notif): ?>
-              <div class="notif-menu-item">
+              <a class="notif-menu-item" href="<?= htmlspecialchars($notif['url'] ?? 'notifications.php') ?>">
                 <div class="notif-type <?= htmlspecialchars($notif['type']) ?>">
                   <?= htmlspecialchars($notif['label'] ?? ($notif['type'] === 'announcement' ? 'Announcement' : 'Session')) ?>
                 </div>
                 <div class="notif-title"><?= htmlspecialchars($notif['title']) ?></div>
                 <div class="notif-text"><?= htmlspecialchars($notif['message']) ?></div>
                 <div class="notif-time"><?= date('M d, Y h:i A', strtotime($notif['created_at'])) ?></div>
-              </div>
+              </a>
             <?php endforeach; ?>
           <?php else: ?>
             <div class="notif-empty">No notifications yet.</div>
           <?php endif; ?>
+
+          <a class="notif-menu-footer" href="notifications.php">
+            View all notifications
+            <i class="bi bi-arrow-right-short"></i>
+          </a>
         </div>
       </div>
 
@@ -722,6 +728,14 @@ if (tableExists($conn, 'testimonials')) {
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
             <input type="text" name="firstname" value="<?= $firstname ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Middle Name</label>
+            <input type="text" name="middlename" value="<?= $middlename ?>" style="
               width:100%; border:1px solid #e5e7eb; border-radius:8px;
               padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
               outline:none; color:#111827;">

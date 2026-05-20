@@ -2935,3 +2935,42 @@ body.dark-mode #editModal label {
       }
     }
 
+
+
+/* Clickable notification items and footer link used across student pages. */
+.notif-menu a.notif-menu-item {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.notif-menu a.notif-menu-item:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+.notif-menu-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 11px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1d4ed8;
+  text-decoration: none;
+  border-top: 1px solid #eef2f7;
+  background: #f8fafc;
+}
+
+.notif-menu-footer:hover {
+  color: #1e40af;
+  background: #eff6ff;
+  text-decoration: none;
+}
+
+body.dark-mode .notif-menu-footer {
+  background: #111827 !important;
+  border-color: #334155 !important;
+  color: #93c5fd !important;
+}

@@ -189,18 +189,23 @@ foreach ($sessions as $s) {
 
           <?php if (!empty($notifications)): ?>
             <?php foreach ($notifications as $notif): ?>
-              <div class="notif-menu-item">
+              <a class="notif-menu-item" href="<?= htmlspecialchars($notif['url'] ?? 'notifications.php') ?>">
                 <div class="notif-type <?= htmlspecialchars($notif['type']) ?>">
                   <?= htmlspecialchars($notif['label'] ?? ($notif['type'] === 'announcement' ? 'Announcement' : 'Session')) ?>
                 </div>
                 <div class="notif-title"><?= htmlspecialchars($notif['title']) ?></div>
                 <div class="notif-text"><?= htmlspecialchars($notif['message']) ?></div>
                 <div class="notif-time"><?= date('M d, Y h:i A', strtotime($notif['created_at'])) ?></div>
-              </div>
+              </a>
             <?php endforeach; ?>
           <?php else: ?>
             <div class="notif-empty">No notifications yet.</div>
           <?php endif; ?>
+
+          <a class="notif-menu-footer" href="notifications.php">
+            View all notifications
+            <i class="bi bi-arrow-right-short"></i>
+          </a>
         </div>
       </div>
 
@@ -310,7 +315,7 @@ foreach ($sessions as $s) {
                     <td><?= formatTimeLabel($s['login_time']) ?></td>
                     <td><?= $s['time_out'] ? formatTimeLabel($s['time_out']) : '—' ?></td>
                     <td><?= htmlspecialchars($duration) ?></td>
-                    <td><?= htmlspecialchars($s['session_at_sitin'] ?? '—') ?></td>
+                    <td><?= ($s['session_at_sitin'] !== null && $s['session_at_sitin'] !== '' && (int)$s['session_at_sitin'] > 0) ? htmlspecialchars($s['session_at_sitin']) : '—' ?></td>
                     <td>
                       <span class="status-pill status-<?= htmlspecialchars($computed) ?>">
                         <?= htmlspecialchars($computed) ?>

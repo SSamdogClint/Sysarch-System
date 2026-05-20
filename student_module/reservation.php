@@ -17,6 +17,7 @@ if (empty($_SESSION['logged_in'])) {
 $student_id = (int)($_SESSION['student_id'] ?? 0);
 $firstname  = htmlspecialchars($_SESSION['firstname'] ?? '');
 $lastname   = htmlspecialchars($_SESSION['lastname'] ?? '');
+$middlename = htmlspecialchars($_SESSION['middlename'] ?? '');
 $course     = htmlspecialchars($_SESSION['course'] ?? '');
 $yearlvl    = htmlspecialchars($_SESSION['yearlvl'] ?? '');
 $email      = htmlspecialchars($_SESSION['email'] ?? '');
@@ -91,27 +92,38 @@ $stmt->close();
 $today = date('Y-m-d');
 
 $allReservations = $reservations;
-$currentReservations = [];
 $pendingReservations = [];
+$approvedReservations = [];
+$cancelledReservations = [];
 
 foreach ($reservations as $reservation) {
     $status = strtolower($reservation['status'] ?? '');
-    $reservationDate = $reservation['reservation_date'] ?? '';
 
     if ($status === 'pending') {
         $pendingReservations[] = $reservation;
     }
 
     /*
-      Current Reservation:
-      - approved future/today reservation can be disabled/cancelled
-      - cancelled future/today reservation can be enabled again to pending
+      Approved Reservation tab:
+      Only reservations already approved by admin or already completed.
+      Cancelled reservations are separated into their own tab.
+      Progress labels:
+      - Scheduled: approved and still upcoming
+      - Ongoing Schedule: approved and currently within the reserved time
+      - Completed: completed/done reservation
+      - Uncompleted: approved schedule already passed but was not completed
     */
-    if (
-        $reservationDate >= $today &&
-        in_array($status, ['approved', 'cancelled'], true)
-    ) {
-        $currentReservations[] = $reservation;
+    if (in_array($status, ['approved', 'completed', 'done'], true)) {
+        $approvedReservations[] = $reservation;
+    }
+
+    /*
+      Cancelled Reservation tab:
+      All cancelled reservations go here, whether they were cancelled while pending
+      or cancelled after approval.
+    */
+    if ($status === 'cancelled') {
+        $cancelledReservations[] = $reservation;
     }
 }
 
@@ -135,11 +147,53 @@ function reservationStatusBadge(string $status): string
         return 'secondary';
     }
 
-    if ($status === 'done') {
+    if ($status === 'done' || $status === 'completed') {
         return 'primary';
     }
 
     return 'dark';
+}
+
+function reservationProgressBadge(array $reservation): array
+{
+    $status = strtolower(trim($reservation['status'] ?? ''));
+    $date = $reservation['reservation_date'] ?? '';
+    $start = $reservation['reservation_time'] ?? '';
+    $end = $reservation['reservation_end_time'] ?? '';
+
+    if ($status === 'done' || $status === 'completed') {
+        return ['Completed', 'success'];
+    }
+
+    if ($status === 'cancelled') {
+        return ['Cancelled', 'secondary'];
+    }
+
+    if ($status === 'pending') {
+        return ['Pending Approval', 'warning'];
+    }
+
+    if ($status === 'rejected') {
+        return ['Rejected', 'danger'];
+    }
+
+    if ($status === 'approved') {
+        $startTimestamp = ($date && $start) ? strtotime($date . ' ' . $start) : 0;
+        $endTimestamp = ($date && $end) ? strtotime($date . ' ' . $end) : 0;
+        $now = time();
+
+        if ($startTimestamp && $startTimestamp > $now) {
+            return ['Scheduled', 'info'];
+        }
+
+        if ($startTimestamp && $endTimestamp && $startTimestamp <= $now && $endTimestamp >= $now) {
+            return ['Ongoing Schedule', 'primary'];
+        }
+
+        return ['Uncompleted', 'danger'];
+    }
+
+    return ['Unknown', 'dark'];
 }
 
 function formatReservationDate(?string $date): string
@@ -168,7 +222,7 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
     if (empty($reservations)) {
         echo '
             <tr>
-                <td colspan="8" class="text-center text-muted py-4">
+                <td colspan="9" class="text-center text-muted py-4">
                     No reservation records found.
                 </td>
             </tr>
@@ -182,6 +236,10 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
         $statusClass = reservationStatusBadge($status);
         $reservationDate = $r['reservation_date'] ?? '';
         $isFutureOrToday = $reservationDate >= $today;
+
+        $progress = reservationProgressBadge($r);
+        $progressText = $progress[0];
+        $progressClass = $progress[1];
 
         $lab = htmlspecialchars($r['lab'] ?? '—');
         $pcNumber = !empty($r['pc_number']) ? 'PC ' . str_pad((string)(int)$r['pc_number'], 2, '0', STR_PAD_LEFT) : '—';
@@ -199,10 +257,11 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
         echo '<td>' . htmlspecialchars($date) . '</td>';
         echo '<td>' . htmlspecialchars($time) . '</td>';
         echo '<td><span class="badge text-bg-' . $statusClass . '">' . $statusText . '</span></td>';
+        echo '<td><span class="badge text-bg-' . $progressClass . '">' . htmlspecialchars($progressText) . '</span></td>';
 
         echo '<td>';
 
-        if ($tabType === 'current') {
+        if ($tabType === 'approved') {
             if ($status === 'approved' && $isFutureOrToday) {
                 echo '
                     <button 
@@ -210,15 +269,6 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
                         class="btn btn-sm btn-outline-danger"
                         onclick="toggleReservation(' . $id . ', \'disable\')">
                         Disable
-                    </button>
-                ';
-            } elseif ($status === 'cancelled' && $isFutureOrToday) {
-                echo '
-                    <button 
-                        type="button" 
-                        class="btn btn-sm btn-outline-success"
-                        onclick="toggleReservation(' . $id . ', \'enable\')">
-                        Enable
                     </button>
                 ';
             } else {
@@ -237,6 +287,8 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
             } else {
                 echo '<span class="text-muted small">No action</span>';
             }
+        } elseif ($tabType === 'cancelled') {
+            echo '<span class="text-muted small">Cancelled</span>';
         } else {
             echo '<span class="text-muted small">' . htmlspecialchars($createdAt) . '</span>';
         }
@@ -245,6 +297,7 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
         echo '</tr>';
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -299,18 +352,23 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
 
           <?php if (!empty($notifications)): ?>
             <?php foreach ($notifications as $notif): ?>
-              <div class="notif-menu-item">
+              <a class="notif-menu-item" href="<?= htmlspecialchars($notif['url'] ?? 'notifications.php') ?>">
                 <div class="notif-type <?= htmlspecialchars($notif['type']) ?>">
                   <?= htmlspecialchars($notif['label'] ?? ($notif['type'] === 'announcement' ? 'Announcement' : 'Session')) ?>
                 </div>
                 <div class="notif-title"><?= htmlspecialchars($notif['title']) ?></div>
                 <div class="notif-text"><?= htmlspecialchars($notif['message']) ?></div>
                 <div class="notif-time"><?= date('M d, Y h:i A', strtotime($notif['created_at'])) ?></div>
-              </div>
+              </a>
             <?php endforeach; ?>
           <?php else: ?>
             <div class="notif-empty">No notifications yet.</div>
           <?php endif; ?>
+
+          <a class="notif-menu-footer" href="notifications.php">
+            View all notifications
+            <i class="bi bi-arrow-right-short"></i>
+          </a>
         </div>
       </div>
 
@@ -441,7 +499,7 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
                   Reservation Records
                 </h4>
                 <p class="text-muted mb-0">
-                  View all, current, and pending reservations.
+                  View all, pending, approved, and cancelled reservations.
                 </p>
               </div>
 
@@ -454,17 +512,17 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
           <div class="card-body p-4">
             <div class="alert alert-info">
               <i class="bi bi-info-circle me-1"></i>
-              In <strong>Current Reservation</strong>, you can disable an approved reservation or enable a cancelled future reservation back to pending.
+              In <strong>Approved Reservation</strong>, the progress will show as <strong>Scheduled</strong>, <strong>Ongoing Schedule</strong>, <strong>Completed</strong>, or <strong>Uncompleted</strong>. Cancelled reservations are separated in the <strong>Cancelled Reservation</strong> tab.
             </div>
 
-            <ul class="nav nav-tabs" id="reservationTabs" role="tablist">
+            <ul class="nav nav-tabs mt-3" id="reservationTabs" role="tablist">
               <li class="nav-item" role="presentation">
-                <button 
-                  class="nav-link active" 
-                  id="all-tab" 
-                  data-bs-toggle="tab" 
-                  data-bs-target="#all-reservations" 
-                  type="button" 
+                <button
+                  class="nav-link active"
+                  id="all-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#all-reservations"
+                  type="button"
                   role="tab">
                   All Reservation
                   <span class="badge text-bg-secondary ms-1"><?= count($allReservations) ?></span>
@@ -472,34 +530,47 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
               </li>
 
               <li class="nav-item" role="presentation">
-                <button 
-                  class="nav-link" 
-                  id="current-tab" 
-                  data-bs-toggle="tab" 
-                  data-bs-target="#current-reservations" 
-                  type="button" 
-                  role="tab">
-                  Current Reservation
-                  <span class="badge text-bg-secondary ms-1"><?= count($currentReservations) ?></span>
-                </button>
-              </li>
-
-              <li class="nav-item" role="presentation">
-                <button 
-                  class="nav-link" 
-                  id="pending-tab" 
-                  data-bs-toggle="tab" 
-                  data-bs-target="#pending-reservations" 
-                  type="button" 
+                <button
+                  class="nav-link"
+                  id="pending-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#pending-reservations"
+                  type="button"
                   role="tab">
                   Pending Reservation
                   <span class="badge text-bg-secondary ms-1"><?= count($pendingReservations) ?></span>
                 </button>
               </li>
+
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="approved-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#approved-reservations"
+                  type="button"
+                  role="tab">
+                  Approved Reservation
+                  <span class="badge text-bg-secondary ms-1"><?= count($approvedReservations) ?></span>
+                </button>
+              </li>
+
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="cancelled-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#cancelled-reservations"
+                  type="button"
+                  role="tab">
+                  Cancelled Reservation
+                  <span class="badge text-bg-secondary ms-1"><?= count($cancelledReservations) ?></span>
+                </button>
+              </li>
             </ul>
 
             <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white" id="reservationTabsContent">
-              <div class="tab-pane fade show active" id="all-reservations" role="tabpanel">
+              <div class="tab-pane fade show active" id="all-reservations" role="tabpanel" aria-labelledby="all-tab">
                 <div class="table-responsive">
                   <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
@@ -511,6 +582,7 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
                         <th>Date</th>
                         <th>Time</th>
                         <th>Status</th>
+                        <th>Progress</th>
                         <th>Created At</th>
                       </tr>
                     </thead>
@@ -521,7 +593,7 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
                 </div>
               </div>
 
-              <div class="tab-pane fade" id="current-reservations" role="tabpanel">
+              <div class="tab-pane fade" id="pending-reservations" role="tabpanel" aria-labelledby="pending-tab">
                 <div class="table-responsive">
                   <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
@@ -533,33 +605,58 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
                         <th>Date</th>
                         <th>Time</th>
                         <th>Status</th>
-                        <th>Control</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php renderReservationRows($currentReservations, 'current', $today); ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="tab-pane fade" id="pending-reservations" role="tabpanel">
-                <div class="table-responsive">
-                  <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                      <tr>
-                        <th>#</th>
-                        <th>Lab</th>
-                        <th>PC</th>
-                        <th>Purpose</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Status</th>
+                        <th>Progress</th>
                         <th>Control</th>
                       </tr>
                     </thead>
                     <tbody>
                       <?php renderReservationRows($pendingReservations, 'pending', $today); ?>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="approved-reservations" role="tabpanel" aria-labelledby="approved-tab">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Lab</th>
+                        <th>PC</th>
+                        <th>Purpose</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Control</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php renderReservationRows($approvedReservations, 'approved', $today); ?>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="cancelled-reservations" role="tabpanel" aria-labelledby="cancelled-tab">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Lab</th>
+                        <th>PC</th>
+                        <th>Purpose</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php renderReservationRows($cancelledReservations, 'cancelled', $today); ?>
                     </tbody>
                   </table>
                 </div>
@@ -596,6 +693,14 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
           <div style="margin-bottom:14px;">
             <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">First Name</label>
             <input type="text" name="firstname" value="<?= $firstname ?>" style="
+              width:100%; border:1px solid #e5e7eb; border-radius:8px;
+              padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+              outline:none; color:#111827;">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Middle Name</label>
+            <input type="text" name="middlename" value="<?= $middlename ?>" style="
               width:100%; border:1px solid #e5e7eb; border-radius:8px;
               padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
               outline:none; color:#111827;">
@@ -1190,6 +1295,31 @@ function renderReservationRows(array $reservations, string $tabType, string $tod
         );
       });
   }
+
+  function openReservationTabFromHash() {
+    const hash = window.location.hash;
+    if (!hash) return;
+
+    const targetMap = {
+      '#pending-reservations': '#pending-tab',
+      '#approved-reservations': '#approved-tab',
+      '#cancelled-reservations': '#cancelled-tab',
+      '#all-reservations': '#all-tab'
+    };
+
+    const tabSelector = targetMap[hash];
+    if (!tabSelector) return;
+
+    const tabButton = document.querySelector(tabSelector);
+    if (tabButton && window.bootstrap) {
+      const tab = new bootstrap.Tab(tabButton);
+      tab.show();
+      setTimeout(() => tabButton.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    }
+  }
+
+  openReservationTabFromHash();
+  window.addEventListener('hashchange', openReservationTabFromHash);
 
   handleLabChange();
 </script>

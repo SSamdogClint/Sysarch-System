@@ -825,9 +825,7 @@ $setupReady = $hasRewardPoints && $hasRewardPointsEarned && $hasTaskCompleted &&
                             <th>Sessions</th>
                             <th>Sit-in Hours</th>
                             <th>Earned Points</th>
-                            <th>Balance</th>
                             <th>Task Points</th>
-                            <th>Assessments</th>
                             <th class="pe-4">Final Score</th>
                           </tr>
                         </thead>
@@ -835,7 +833,7 @@ $setupReady = $hasRewardPoints && $hasRewardPointsEarned && $hasTaskCompleted &&
                         <tbody>
                           <?php if (!$leaderboard): ?>
                             <tr>
-                              <td colspan="9" class="text-center text-muted py-5">
+                              <td colspan="7" class="text-center text-muted py-5">
                                 No students found.
                               </td>
                             </tr>
@@ -874,14 +872,10 @@ $setupReady = $hasRewardPoints && $hasRewardPointsEarned && $hasTaskCompleted &&
                                 <span class="score-small">Reward score: <?= formatNumber($student['reward_score']) ?>%</span>
                               </td>
 
-                              <td><?= formatNumber($student['reward_points_balance']) ?></td>
-
                               <td>
                                 <?= formatNumber($student['task_points']) ?>
                                 <span class="score-small">Task score: <?= formatNumber($student['task_score']) ?>%</span>
                               </td>
-
-                              <td><?= (int)$student['assessment_count'] ?></td>
 
                               <td class="pe-4">
                                 <strong><?= formatNumber($student['leaderboard_score']) ?></strong>
@@ -946,9 +940,7 @@ $setupReady = $hasRewardPoints && $hasRewardPointsEarned && $hasTaskCompleted &&
                             <th>Sessions</th>
                             <th>Sit-in Hours</th>
                             <th>Earned Points</th>
-                            <th>Balance</th>
                             <th>Task Points</th>
-                            <th>Assessments</th>
                             <th class="pe-4">Final Score</th>
                           </tr>
                         </thead>
@@ -956,7 +948,7 @@ $setupReady = $hasRewardPoints && $hasRewardPointsEarned && $hasTaskCompleted &&
                         <tbody>
                           <?php if (!$pastEntries): ?>
                             <tr>
-                              <td colspan="9" class="text-center text-muted py-5">
+                              <td colspan="7" class="text-center text-muted py-5">
                                 No past leaderboard entries found.
                               </td>
                             </tr>
@@ -987,14 +979,10 @@ $setupReady = $hasRewardPoints && $hasRewardPointsEarned && $hasTaskCompleted &&
                                 <span class="score-small"><?= formatNumber($entry['reward_score']) ?>%</span>
                               </td>
 
-                              <td><?= formatNumber($entry['reward_points_balance']) ?></td>
-
                               <td>
                                 <?= formatNumber($entry['task_points']) ?>
                                 <span class="score-small"><?= formatNumber($entry['task_score']) ?>%</span>
                               </td>
-
-                              <td><?= (int)$entry['assessment_count'] ?></td>
 
                               <td class="pe-4">
                                 <strong><?= formatNumber($entry['final_score']) ?></strong>

@@ -239,7 +239,7 @@ function shortText($text, $limit = 120) {
                       <td><?= nl2br(htmlspecialchars(shortText($item['message'], 140))) ?></td>
                       <td><?= htmlspecialchars($item['created_at']) ?></td>
                       <td class="pe-4">
-                        <form method="POST" onsubmit="return confirm('Delete this testimonial?');">
+                        <form method="POST" data-confirm-message="Delete this testimonial?" data-confirm-title="Delete Confirmation" data-confirm-type="danger" data-confirm-ok="Yes, Delete">
                           <input type="hidden" name="id" value="<?= (int)$item['id'] ?>">
                           <input type="hidden" name="action" value="delete">
                           <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
